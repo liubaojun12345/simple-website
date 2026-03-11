@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>策略回测 - 期权世界</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="backtest.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">期权世界</div>
+            <ul class="nav-links">
+                <li><a href="index.html#home">首页</a></li>
+                <li><a href="index.html#about">关于</a></li>
+                <li><a href="backtest.html" class="active">策略回测</a></li>
+                <li><a href="index.html#contact">联系</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </nav>
+    </header>
+
+    <main class="backtest-container">
+        <section class="backtest-header">
+            <h1>RSI策略回测</h1>
+            <p>标的：588000 科创板ETF | 策略：RSI超买超卖 | 周期：1分钟K线</p>
+        </section>
+
+        <section class="strategy-info">
+            <div class="info-card">
+                <h3>策略规则</h3>
+                <ul>
+                    <li>✓ <strong>开仓条件：</strong>RSI从超卖区（低于30）回升上穿30时开仓</li>
+                    <li>✓ <strong>平仓条件：</strong>RSI从超买区（高于70）回落跌破70时平仓</li>
+                    <li>✓ <strong>回测区间：</strong>2026年1月1日至今</li>
+                    <li>✓ <strong>K线周期：</strong>1分钟</li>
+                </ul>
+            </div>
+            <div class="control-card">
+                <h3>开始回测</h3>
+                <button id="startBacktest" class="btn primary">开始回测</button>
+                <div id="loading" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>正在获取数据并计算...</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="results-section" style="display: none;" id="resultsSection">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">总交易次数</div>
+                    <div class="metric-value" id="totalTrades">-</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">盈利次数</div>
+                    <div class="metric-value" id="winningTrades">-</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">胜率</div>
+                    <div class="metric-value" id="winRate">-</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">总收益率</div>
+                    <div class="metric-value positive" id="totalReturn">-</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">最大回撤</div>
+                    <div class="metric-value negative" id="maxDrawdown">-</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">夏普比率</div>
+                    <div class="metric-value" id="sharpeRatio">-</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>净值曲线</h3>
+                <canvas id="equityChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>RSI指标走势</h3>
+                <canvas id="rsiChart"></canvas>
+            </div>
+
+            <div class="trades-table-container">
+                <h3>交易记录</h3>
+                <table id="tradesTable">
+                    <thead>
+                        <tr>
+                            <th>序号</th>
+                            <th>开仓时间</th>
+                            <th>开仓价格</th>
+                            <th>平仓时间</th>
+                            <th>平仓价格</th>
+                            <th>收益率</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tradesTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 期权世界. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="backtest.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
