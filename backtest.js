@@ -35,33 +35,78 @@ async function fetchData() {
     return generateSampleData();
 }
 
-// 生成模拟数据（演示用）
+// 生成更真实的模拟数据，只包含A股交易时间
+// 交易时间：上午 9:30-11:30 (120分钟)，下午 13:00-15:00 (120分钟)，每天 240 根一分钟K线
 function generateSampleData() {
     let data = [];
     let basePrice = 0.85;
-    let startTime = new Date("2026-01-01").getTime();
+    let currentDate = new Date("2026-01-01");
+    let endDate = new Date(); // 到今天
     
-    // 生成一个月的1分钟数据，大约22个交易日 * 240分钟 = 5280根K线
-    for (let i = 0; i < 5280; i++) {
-        let change = (Math.random() - 0.5) * 0.02;
-        basePrice = Math.max(basePrice + change, 0.7);
-        basePrice = Math.min(basePrice, 1.05);
+    // 从2026年1月1日遍历到今天
+    while (currentDate <= endDate) {
+        let dayOfWeek = currentDate.getDay(); // 0=周日, 6=周六
+        // 跳过周末，只保留交易日
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            // 上午交易时段 9:30-11:30
+            let morningStart = new Date(currentDate);
+            morningStart.setHours(9, 30, 0, 0);
+            for (let i = 0; i < 120; i++) {
+                let time = new Date(morningStart.getTime() + i * 60 * 1000);
+                basePrice = generateNextPrice(basePrice);
+                let candle = createCandle(time, basePrice);
+                data.push(candle);
+            }
+            
+            // 下午交易时段 13:00-15:00
+            let afternoonStart = new Date(currentDate);
+            afternoonStart.setHours(13, 0, 0, 0);
+            for (let i = 0; i < 120; i++) {
+                let time = new Date(afternoonStart.getTime() + i * 60 * 1000);
+                basePrice = generateNextPrice(basePrice);
+                let candle = createCandle(time, basePrice);
+                data.push(candle);
+            }
+        }
         
-        let open = basePrice;
-        let close = basePrice + (Math.random() - 0.5) * 0.01;
-        let high = Math.max(open, close) + Math.random() * 0.005;
-        let low = Math.min(open, close) - Math.random() * 0.005;
-        
-        data.push({
-            time: new Date(startTime + i * 60 * 1000),
-            open: open,
-            high: high,
-            low: low,
-            close: close,
-            volume: Math.floor(Math.random() * 10000000)
-        });
+        // 下一天
+        currentDate.setDate(currentDate.getDate() + 1);
     }
+    
+    console.log(`Generated ${data.length} 1min candles (trading hours only) from 2026-01-01`);
     return data;
+}
+
+// 生成下一根K线价格，更贴合真实波动
+function generateNextPrice(basePrice) {
+    // 波动率贴合588000实际情况
+    let change = (Math.random() - 0.5) * 0.015;
+    // 加上一点趋势
+    let trend = (Math.random() - 0.5) * 0.002;
+    let newPrice = basePrice + change + trend;
+    // 限制在合理价格区间
+    return Math.max(newPrice, 0.68);
+}
+
+// 创建一根K线
+function createCandle(time, basePrice) {
+    let open = basePrice;
+    let close = basePrice + (Math.random() - 0.5) * 0.008;
+    let high = Math.max(open, close) + Math.random() * 0.004;
+    let low = Math.min(open, close) - Math.random() * 0.004;
+    
+    // 保证价格合理
+    high = Math.max(high, open, close);
+    low = Math.min(low, open, close);
+    
+    return {
+        time: time,
+        open: open,
+        high: high,
+        low: low,
+        close: close,
+        volume: Math.floor(Math.random() * 15000000) + 2000000
+    };
 }
 
 // 执行回测
