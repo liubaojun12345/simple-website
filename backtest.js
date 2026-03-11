@@ -425,13 +425,21 @@ async function drawDailyChart() {
         dailyChartInstance.destroy();
     }
 
+    console.log("Loading 588000 daily chart from Yahoo...");
+
     try {
-        // 获取日线数据
+        // 获取日线数据，使用 cors-anywhere 代理
         const proxyUrl = 'https://api.allorigins.win/get?url=';
         const targetUrl = encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/588000.SS?period1=1735689600&period2=' + Math.floor(Date.now() / 1000) + '&interval=1d');
         
         const response = await fetch(proxyUrl + targetUrl);
+        if (!response.ok) {
+            throw new Error('HTTP error, status = ' + response.status);
+        }
         const data = await response.json();
+        if (!data.contents) {
+            throw new Error('No content received');
+        }
         const json = JSON.parse(data.contents);
         
         if (json.chart && json.chart.result && json.chart.result[0]) {
@@ -479,6 +487,7 @@ async function drawDailyChart() {
         }
     } catch (e) {
         console.log("Failed to fetch daily data", e);
+        alert("获取日线数据失败，请刷新重试：" + e.message);
     }
 }
 
