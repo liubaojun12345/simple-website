@@ -12,38 +12,6 @@ const pageSize = 20;
 let allKlineData = [];
 let allTradesData = [];
 
-// 通过新浪财经API获取日线数据
-async function fetchDailyData(symbol) {
-    const num = 750;
-    const proxyUrl = 'https://api.allorigins.win/get?url=';
-    const targetUrl = encodeURIComponent(`https://finance.sina.com.cn/stock/quotes/${symbol}/kline/day/?num=${num}`);
-    
-    console.log(`Fetching ${symbol}...`);
-    
-    try {
-        const altUrl = `http://finance.sina.com.cn/realstock/company/${symbol}/nc.js`;
-        const response = await fetch(proxyUrl + encodeURIComponent(altUrl));
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        
-        console.log(`Got data for ${symbol}`);
-        return parseSinaData(data.contents, symbol);
-    } catch (e) {
-        console.error(`Fetch failed for ${symbol}:`, e);
-        return generateSimulatedData(symbol, 750);
-    }
-}
-
-// 解析新浪数据格式
-function parseSinaData(content, symbol) {
-    try {
-        return generateSimulatedData(symbol, 750);
-    } catch (e) {
-        console.error("Parse error", e);
-        return generateSimulatedData(symbol, 750);
-    }
-}
-
 // 生成模拟数据（API失败时备用，符合真实价格范围）
 function generateSimulatedData(symbol, days) {
     const basePrice = {
@@ -166,6 +134,38 @@ function calculateMACD(closes, fastPeriod = 12, slowPeriod = 26, signalPeriod = 
         dea: dea,
         macd: macd
     };
+}
+
+// 通过新浪财经API获取日线数据
+async function fetchDailyData(symbol) {
+    const num = 750;
+    const proxyUrl = 'https://api.allorigins.win/get?url=';
+    const targetUrl = encodeURIComponent(`https://finance.sina.com.cn/stock/quotes/${symbol}/kline/day/?num=${num}`);
+    
+    console.log(`Fetching ${symbol}...`);
+    
+    try {
+        const altUrl = `http://finance.sina.com.cn/realstock/company/${symbol}/nc.js`;
+        const response = await fetch(proxyUrl + encodeURIComponent(altUrl));
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        
+        console.log(`Got data for ${symbol}`);
+        return parseSinaData(data.contents, symbol);
+    } catch (e) {
+        console.error(`Fetch failed for ${symbol}:`, e);
+        return generateSimulatedData(symbol, 750);
+    }
+}
+
+// 解析新浪数据格式
+function parseSinaData(content, symbol) {
+    try {
+        return generateSimulatedData(symbol, 750);
+    } catch (e) {
+        console.error("Parse error", e);
+        return generateSimulatedData(symbol, 750);
+    }
 }
 
 // 回测策略：RSI(14)，低于oversold上穿开仓，高于overbought下穿平仓
@@ -513,7 +513,6 @@ function renderTradesPage() {
     
     infoContainer.textContent = ` (第 ${currentTradesPage} / ${totalPages} 页，共 ${allTradesData.length} 笔)`;
     
-    let originalTotal = allTradesData.length;
     allTradesData.slice(start, end).forEach((p, i) => {
         let row = document.createElement('tr');
         let pnlPercent = (p.pnl * 100).toFixed(2);
