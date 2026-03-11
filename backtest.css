@@ -13,6 +13,7 @@ main {
 
 .version-info {
     text-align: right;
+    margin-top: 1rem;
     margin-bottom: 1rem;
     color: #64748b;
     font-size: 0.9rem;

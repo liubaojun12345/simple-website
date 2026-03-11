@@ -175,99 +175,122 @@ let equityChartInstance = null;
 let rsiChartInstance = null;
 
 function drawCharts(data, result, rsiValues) {
-    // 净值曲线
-    const equityCtx = document.getElementById('equityChart').getContext('2d');
-    if (equityChartInstance) {
-        equityChartInstance.destroy();
-    }
-
-    let equityData = result.equity;
-    let labels = data.map(d => {
-        return d.time.toLocaleDateString() + ' ' + d.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    });
-
-    // 采样减少数据点
-    let sampleStep = Math.ceil(labels.length / 100);
-    let sampledLabels = [];
-    let sampledEquity = [];
-    let sampledRsi = [];
-    let sampledClose = [];
+    // 先确保结果区域显示
+    document.getElementById('resultsSection').style.display = 'block';
     
-    for (let i = 0; i < labels.length; i += sampleStep) {
-        sampledLabels.push(labels[i]);
-        sampledEquity.push(equityData[i] * 100 - 100);
-        if (rsiValues[i] !== null) {
-            sampledRsi.push(rsiValues[i]);
-        } else {
-            sampledRsi.push(null);
+    setTimeout(() => {
+        // 净值曲线
+        const equityCanvas = document.getElementById('equityChart');
+        if (!equityCanvas) return;
+        const equityCtx = equityCanvas.getContext('2d');
+        if (equityChartInstance) {
+            equityChartInstance.destroy();
         }
-        sampledClose.push(data[i].close);
-    }
 
-    equityChartInstance = new Chart(equityCtx, {
-        type: 'line',
-        data: {
-            labels: sampledLabels,
-            datasets: [{
-                label: '净值收益率 (%)',
-                data: sampledEquity,
-                borderColor: '#1e3a8a',
-                backgroundColor: 'rgba(30, 58, 138, 0.1)',
-                fill: true,
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: true
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: false
-                }
+        let equityData = result.equity;
+        let labels = data.map(d => {
+            return d.time.toLocaleDateString() + ' ' + d.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        });
+
+        // 采样减少数据点
+        let sampleStep = Math.ceil(labels.length / 100);
+        let sampledLabels = [];
+        let sampledEquity = [];
+        let sampledRsi = [];
+
+        for (let i = 0; i < labels.length; i += sampleStep) {
+            sampledLabels.push(labels[i]);
+            sampledEquity.push(equityData[i] * 100 - 100);
+            if (rsiValues[i] !== null) {
+                sampledRsi.push(rsiValues[i]);
+            } else {
+                sampledRsi.push(null);
             }
         }
-    });
 
-    // RSI图表
-    const rsiCtx = document.getElementById('rsiChart').getContext('2d');
-    if (rsiChartInstance) {
-        rsiChartInstance.destroy();
-    }
-
-    rsiChartInstance = new Chart(rsiCtx, {
-        type: 'line',
-        data: {
-            labels: sampledLabels,
-            datasets: [{
-                label: 'RSI(14)',
-                data: sampledRsi,
-                borderColor: '#d4af37',
-                backgroundColor: 'rgba(212, 175, 55, 0.1)',
-                fill: false,
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: true
-                }
+        equityChartInstance = new Chart(equityCtx, {
+            type: 'line',
+            data: {
+                labels: sampledLabels,
+                datasets: [{
+                    label: '净值收益率 (%)',
+                    data: sampledEquity,
+                    borderColor: '#1e3a8a',
+                    backgroundColor: 'rgba(30, 58, 138, 0.1)',
+                    fill: true,
+                    tension: 0.1
+                }]
             },
-            scales: {
-                y: {
-                    min: 0,
-                    max: 100
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false
+                    }
                 }
             }
+        });
+
+        // RSI图表
+        const rsiCanvas = document.getElementById('rsiChart');
+        if (!rsiCanvas) return;
+        const rsiCtx = rsiCanvas.getContext('2d');
+        if (rsiChartInstance) {
+            rsiChartInstance.destroy();
         }
-    });
+
+        rsiChartInstance = new Chart(rsiCtx, {
+            type: 'line',
+            data: {
+                labels: sampledLabels,
+                datasets: [{
+                    label: 'RSI(14)',
+                    data: sampledRsi,
+                    borderColor: '#d4af37',
+                    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                    fill: false,
+                    tension: 0.1
+                }, {
+                    label: '超买线 70',
+                    data: Array(sampledLabels.length).fill(70),
+                    borderColor: '#ef4444',
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false
+                }, {
+                    label: '超卖线 30',
+                    data: Array(sampledLabels.length).fill(30),
+                    borderColor: '#10b981',
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 100
+                    }
+                }
+            }
+        });
+    }, 100);
 }
 
 // 显示交易记录
@@ -293,7 +316,7 @@ function displayTrades(positions) {
 }
 
 // 显示结果
-function displayResults(result, metrics) {
+function displayResults(result, metrics, data, rsiValues) {
     document.getElementById('totalTrades').textContent = metrics.totalTrades;
     document.getElementById('winningTrades').textContent = metrics.winningTrades;
     document.getElementById('winRate').textContent = metrics.winRate + '%';
@@ -309,7 +332,9 @@ function displayResults(result, metrics) {
     document.getElementById('sharpeRatio').textContent = metrics.sharpeRatio;
 
     displayTrades(result.positions);
-    document.getElementById('resultsSection').style.display = 'block';
+    
+    // 绘制图表
+    drawCharts(data, result, rsiValues);
 }
 
 // 主程序
@@ -344,7 +369,7 @@ document.getElementById('startBacktest').addEventListener('click', async functio
         drawCharts(data, result, rsiValues);
 
         // 显示结果
-        displayResults(result, metrics);
+        displayResults(result, metrics, data, rsiValues);
 
     } catch (e) {
         console.error(e);
