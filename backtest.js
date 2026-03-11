@@ -89,7 +89,7 @@ function generateSampleData() {
                 let candle = createCandle(time, basePrice);
                 data.push(candle);
             }
-
+            
             // 下午交易时段 13:00-15:00
             let afternoonStart = new Date(currentDate);
             afternoonStart.setHours(13, 0, 0, 0);
@@ -241,7 +241,7 @@ function calculateMetrics(result) {
 
     return {
         totalTrades: positions.length,
-        winningTrades,
+        winningTrades: winningTrades,
         winRate: (winningTrades / positions.length * 100).toFixed(2),
         totalReturn: (totalReturn * 100).toFixed(2),
         maxDrawdown: (maxDrawdown * 100).toFixed(2),
@@ -254,10 +254,12 @@ let equityChartInstance = null;
 let rsiChartInstance = null;
 let priceChartInstance = null;
 let dailyChartInstance = null;
+let window.fullData = []; // 保存全局数据
 
 function drawCharts(data, result, rsiValues) {
     // 先确保结果区域显示
     document.getElementById('resultsSection').style.display = 'block';
+    window.fullData = data;
     
     setTimeout(() => {
         let equityData = result.equity;
@@ -387,7 +389,7 @@ function drawCharts(data, result, rsiValues) {
             data: {
                 labels: sampledLabels,
                 datasets: [{
-                    label: '588000 价格',
+                    label: '588000 一分钟K线价格',
                     data: sampledClose,
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -411,12 +413,10 @@ function drawCharts(data, result, rsiValues) {
             }
         });
 
-        // 绘制日线图（真实数据）
-        drawDailyChart();
     }, 100);
 }
 
-// 绘制588000日K线图（2026年以来，真实数据）
+// 绘制588000日K线图 (2026年以来，真实数据)
 window.drawDailyChart = async function() {
     const dailyCanvas = document.getElementById('dailyChart');
     if (!dailyCanvas) {
@@ -428,7 +428,10 @@ window.drawDailyChart = async function() {
         dailyChartInstance.destroy();
     }
 
-    console.log("Loading 588000 daily chart from Yahoo...");
+    console.log("Loading 58800 daily chart from Yahoo...");
+
+    // 先loading效果
+    dailyCanvas.style.opacity = '0.5';
 
     try {
         // 获取日线数据，使用 cors-anywhere 代理
@@ -493,11 +496,66 @@ window.drawDailyChart = async function() {
                     }
                 }
             });
+            dailyCanvas.style.opacity = '1';
+            console.log("Daily chart drawn successfully");
+        } else {
+            throw new Error('No data received from Yahoo');
         }
     } catch (e) {
         console.log("Failed to fetch daily data", e);
-        alert("获取日线数据失败，请刷新重试：" + e.message);
+        dailyCanvas.style.opacity = '1';
+        
+        // 获取失败，用一分钟数据生成日线
+        console.log("Falling back to daily from 1min data");
+        generateDailyFrom1min(dailyCtx);
     }
+}
+
+// 获取失败时，从一分钟数据聚合生成日线
+function generateDailyFrom1min(dailyCtx) {
+    // 按天聚合收盘价
+    let dailyClose = {};
+    if (!window.fullData || window.fullData.length === 0) {
+        // 没有回测数据，用模拟数据生成
+        dailyClose[new Date().toLocaleDateString()] = 1.5;
+    } else {
+        window.fullData.forEach(candle => {
+            let dateStr = candle.time.toLocaleDateString();
+            dailyClose[dateStr] = candle.close;
+        });
+    }
+    
+    let labels = Object.keys(dailyClose).sort();
+    let dailyData = labels.map(date => dailyClose[date]);
+    
+    dailyChartInstance = new Chart(dailyCtx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '588000 科创50ETF 日线 (从1min聚合)',
+                data: dailyData,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                fill: true,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            }
+        }
+    });
 }
 
 // 显示交易记录
@@ -544,51 +602,52 @@ function displayResults(result, metrics, data, rsiValues) {
     drawCharts(data, result, rsiValues);
 }
 
-// 主程序
-document.getElementById('startBacktest').addEventListener('click', async function() {
-    document.getElementById('loading').style.display = 'block';
-    document.getElementById('resultsSection').style.display = 'none';
-    this.disabled = true;
+// 主程序 - DOM加载完成后绑定事件
+document.addEventListener('DOMContentLoaded', function() {
+    // 绑定开始回测按钮事件
+    document.getElementById('startBacktest').addEventListener('click', async function() {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('resultsSection').style.display = 'none';
+        this.disabled = true;
 
-    try {
-        // 获取数据
-        let data = await fetchData();
-        console.log(`Loaded ${data.length} 1-minute candles`);
+        try {
+            // 获取数据
+            let data = await fetchData();
+            console.log(`Loaded ${data.length} 1-minute candles`);
 
-        if (data.length < 14) {
-            alert('数据不足，请稍后重试');
-            document.getElementById('loading').style.display = 'none';
-            this.disabled = false;
-            return;
+            if (data.length < 14) {
+                alert('数据不足，请稍后重试');
+                document.getElementById('loading').style.display = 'none';
+                this.disabled = false;
+                return;
+            }
+
+            // 计算RSI
+            let closes = data.map(d => d.close);
+            let rsiValues = calculateRSI(closes, 14);
+
+            // 执行回测
+            let result = runBacktest(data, rsiValues);
+
+            // 计算指标
+            let metrics = calculateMetrics(result);
+
+            // 显示结果
+            displayResults(result, metrics, data, rsiValues);
+
+        } catch (e) {
+            console.error(e);
+            alert('回测执行出错: ' + e.message);
         }
 
-        // 计算RSI
-        let closes = data.map(d => d.close);
-        let rsiValues = calculateRSI(closes, 14);
+        document.getElementById('loading').style.display = 'none';
+        this.disabled = false;
+    });
 
-        // 执行回测
-        let result = runBacktest(data, rsiValues);
+    // 页面加载完成后自动加载日线图
+    drawDailyChart();
 
-        // 计算指标
-        let metrics = calculateMetrics(result);
-
-        // 绘制图表
-        drawCharts(data, result, rsiValues);
-
-        // 显示结果
-        displayResults(result, metrics, data, rsiValues);
-
-    } catch (e) {
-        console.error(e);
-        alert('回测执行出错: ' + e.message);
-    }
-
-    document.getElementById('loading').style.display = 'none';
-    this.disabled = false;
-});
-
-// 修改首页按钮链接指向回测页面
-document.addEventListener('DOMContentLoaded', function() {
+    // 修改首页按钮链接
     let btn = document.querySelector('.hero-content .btn');
     if (btn) {
         btn.setAttribute('href', 'backtest.html');
