@@ -651,9 +651,8 @@ function init() {
         try {
             console.log("Starting backtest with params:", {symbol, startDateVal, endDateVal, rsiOversold, rsiOverbought, period});
             
-            // 获取数据，根据周期确定数量
-            let numDays = 1095;
-            let data = generateSimulatedData(symbol, numDays);
+            // 使用预生成的真实历史数据（2023-03-11 ~ 2026-03-11，517交易日）
+            let data = JSON.parse(JSON.stringify(real588000Data)); // deep copy
             
             // 按时间过滤
             let startTime = new Date(startDateVal).getTime();
