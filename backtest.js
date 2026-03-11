@@ -253,6 +253,7 @@ function calculateMetrics(result) {
 let equityChartInstance = null;
 let rsiChartInstance = null;
 let priceChartInstance = null;
+let dailyChartInstance = null;
 
 function drawCharts(data, result, rsiValues) {
     // 先确保结果区域显示
@@ -409,11 +410,82 @@ function drawCharts(data, result, rsiValues) {
                 }
             }
         });
+
+        // 绘制日线图（真实数据）
+        drawDailyChart();
     }, 100);
+}
+
+// 绘制588000日K线图（2026年以来，真实数据）
+async function drawDailyChart() {
+    const dailyCanvas = document.getElementById('dailyChart');
+    if (!dailyCanvas) return;
+    const dailyCtx = dailyCanvas.getContext('2d');
+    if (dailyChartInstance) {
+        dailyChartInstance.destroy();
+    }
+
+    try {
+        // 获取日线数据
+        const proxyUrl = 'https://api.allorigins.win/get?url=';
+        const targetUrl = encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/588000.SS?period1=1735689600&period2=' + Math.floor(Date.now() / 1000) + '&interval=1d');
+        
+        const response = await fetch(proxyUrl + targetUrl);
+        const data = await response.json();
+        const json = JSON.parse(data.contents);
+        
+        if (json.chart && json.chart.result && json.chart.result[0]) {
+            const result = json.chart.result[0];
+            const timestamps = result.timestamp;
+            const quotes = result.indicators.quote[0];
+            
+            let dailyData = [];
+            let labels = [];
+            timestamps.forEach((t, i) => {
+                if (quotes.close[i] != null) {
+                    labels.push(new Date(t * 1000).toLocaleDateString());
+                    dailyData.push(quotes.close[i]);
+                }
+            });
+
+            dailyChartInstance = new Chart(dailyCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '588000 科创50ETF 日线收盘价',
+                        data: dailyData,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+        }
+    } catch (e) {
+        console.log("Failed to fetch daily data", e);
+    }
 }
 
 // 显示交易记录
 function displayTrades(positions) {
+    let tbody = document.getElementById('tradesTableBody');
+    tbody.innerHTML = '';
     let tbody = document.getElementById('tradesTableBody');
     tbody.innerHTML = '';
 
