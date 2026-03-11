@@ -71,7 +71,7 @@ async function fetchData() {
 // 交易时间：上午 9:30-11:30 (120分钟)，下午 13:00-15:00 (120分钟)，每天 240 根一分钟K线
 function generateSampleData() {
     let data = [];
-    let basePrice = 0.85;
+    let basePrice = 1.5; // 当前588000实际价格约1.5元
     let currentDate = new Date("2026-01-01");
     let endDate = new Date(); // 到今天
 
@@ -109,15 +109,17 @@ function generateSampleData() {
     return data;
 }
 
-// 生成下一根K线价格，更贴合真实波动
+// 生成下一根K线价格，更贴合真实波动，当前588000价格约1.5元
 function generateNextPrice(basePrice) {
     // 波动率贴合588000实际情况
-    let change = (Math.random() - 0.5) * 0.015;
+    let change = (Math.random() - 0.5) * 0.02;
     // 加上一点趋势
-    let trend = (Math.random() - 0.5) * 0.002;
+    let trend = (Math.random() - 0.5) * 0.003;
     let newPrice = basePrice + change + trend;
-    // 限制在合理价格区间
-    return Math.max(newPrice, 0.68);
+    // 限制在合理价格区间，符合当前实际价格
+    newPrice = Math.max(newPrice, 1.2);
+    newPrice = Math.min(newPrice, 1.8);
+    return newPrice;
 }
 
 // 创建一根K线
