@@ -38,7 +38,7 @@ nav {
 .logo {
     font-size: 1.5rem;
     font-weight: bold;
-    color: #2c3e50;
+    color: #1e3a8a;
 }
 
 .nav-links {
@@ -49,13 +49,13 @@ nav {
 
 .nav-links a {
     text-decoration: none;
-    color: #2c3e50;
+    color: #1e3a8a;
     font-weight: 500;
     transition: color 0.3s;
 }
 
 .nav-links a:hover {
-    color: #3498db;
+    color: #d4af37;
 }
 
 .hamburger {
@@ -75,13 +75,28 @@ nav {
 /* Hero Section */
 .hero {
     height: 100vh;
-    background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+    background: linear-gradient(135deg, #0a1647 0%, #1e3a8a 50%, #0f172a 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     color: white;
     margin-top: 70px;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 50%);
+    pointer-events: none;
 }
 
 .hero-content h1 {
@@ -97,8 +112,8 @@ nav {
 
 .btn {
     display: inline-block;
-    background: white;
-    color: #2c3e50;
+    background: linear-gradient(135deg, #d4af37 0%, #f4e482 100%);
+    color: #0a1647;
     padding: 0.8rem 2rem;
     border-radius: 50px;
     text-decoration: none;
@@ -108,7 +123,7 @@ nav {
 
 .btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
 }
 
 /* About Section */
@@ -121,7 +136,7 @@ nav {
     text-align: center;
     font-size: 2.5rem;
     margin-bottom: 3rem;
-    color: #2c3e50;
+    color: #1e3a8a;
 }
 
 .about-content {
@@ -160,7 +175,7 @@ nav {
     text-align: center;
     font-size: 2.5rem;
     margin-bottom: 3rem;
-    color: #2c3e50;
+    color: #1e3a8a;
 }
 
 .portfolio-grid {
@@ -205,7 +220,7 @@ nav {
     text-align: center;
     font-size: 2.5rem;
     margin-bottom: 3rem;
-    color: #2c3e50;
+    color: #1e3a8a;
 }
 
 #contact-form {
