@@ -28,11 +28,50 @@ function calculateRSI(prices, period = 14) {
     return rsi;
 }
 
-// 获取588000历史数据
+// 获取588000历史数据，使用新浪财经免费API（支持跨域）
 async function fetchData() {
-    // Yahoo Finance有跨域问题，直接使用模拟数据（价格范围符合588000实际情况）
-    console.log("Using sample data for demonstration based on 588000 price range");
-    return generateSampleData();
+    try {
+        // 新浪财经AP获取最近K线数据
+        const symbol = "510050"; // 588000 is sh588000
+        const url = `https://finance.sina.com.cn/staticdata/future/jsonp/kc/?symbol=SH588000&type=min&callback=?`;
+        
+        return new Promise((resolve, reject) => {
+            // 使用jsonp方式获取数据解决跨域
+            const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
+            window[callbackName] = function(data) {
+                delete window[callbackName];
+                document.body.removeChild(script);
+                
+                if (data && data.data && data.data.length > 0) {
+                    console.log(`Got ${data.data.length} real 1min candles from Sina Finance`);
+                    const parsedData = data.data.map(item => {
+                        return {
+                            time: new Date(item[0] * 1000),
+                            open: parseFloat(item[1]),
+                            high: parseFloat(item[2]),
+                            low: parseFloat(item[3]),
+                            close: parseFloat(item[4]),
+                            volume: parseFloat(item[5])
+                        };
+                    });
+                    // 过滤出2026年1月1日之后的数据
+                    const startTime = new Date("2026-01-01").getTime();
+                    const filteredData = parsedData.filter(item => item.time.getTime() >= startTime);
+                    resolve(filteredData);
+                } else {
+                    console.log("No data from Sina API, using sample data");
+                    resolve(generateSampleData());
+                }
+            };
+            
+            const script = document.createElement('script');
+            script.src = url + '&callback=' + callbackName;
+            document.body.appendChild(script);
+        });
+    } catch (e) {
+        console.log("API fetch failed, using sample data:", e);
+        return generateSampleData();
+    }
 }
 
 // 生成更真实的模拟数据，只包含A股交易时间
