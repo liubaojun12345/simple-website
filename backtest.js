@@ -30,43 +30,8 @@ function calculateRSI(prices, period = 14) {
 
 // 获取588000历史数据
 async function fetchData() {
-    // 使用东方财富API获取588000科创板ETF数据
-    const symbol = "588000";
-    const period = "1"; // 1分钟K线
-    const endTime = Math.floor(Date.now() / 1000);
-    const startTime = Math.floor(new Date("2026-01-01").getTime() / 1000);
-    
-    try {
-        // 使用免费API获取数据
-        const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/588000.SS?period1=${startTime}&period2=${endTime}&interval=1m&includePrePost=true`);
-        const data = await response.json();
-        
-        if (data.chart.result && data.chart.result[0]) {
-            const result = data.chart.result[0];
-            const timestamps = result.timestamp;
-            const quotes = result.indicators.quote[0];
-            
-            let klineData = [];
-            for (let i = 0; i < timestamps.length; i++) {
-                if (quotes.close[i] != null) {
-                    klineData.push({
-                        time: new Date(timestamps[i] * 1000),
-                        open: quotes.open[i],
-                        high: quotes.high[i],
-                        low: quotes.low[i],
-                        close: quotes.close[i],
-                        volume: quotes.volume[i]
-                    });
-                }
-            }
-            return klineData;
-        }
-    } catch (e) {
-        console.log("Yahoo API failed, trying alternative");
-    }
-
-    // 备用方案：使用模拟数据（基于近期价格波动）
-    console.log("Using sample data for demonstration");
+    // Yahoo Finance有跨域问题，直接使用模拟数据（价格范围符合588000实际情况）
+    console.log("Using sample data for demonstration based on 588000 price range");
     return generateSampleData();
 }
 
@@ -360,6 +325,8 @@ document.getElementById('startBacktest').addEventListener('click', async functio
 
         if (data.length < 14) {
             alert('数据不足，请稍后重试');
+            document.getElementById('loading').style.display = 'none';
+            this.disabled = false;
             return;
         }
 
