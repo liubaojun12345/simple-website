@@ -498,9 +498,18 @@ function displayResultSummary(metrics, symbol) {
     `;
 }
 
-// 主程序
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('startFullBacktest').addEventListener('click', async function() {
+// 主程序 - 确保DOM加载后绑定事件
+function init() {
+    let btn = document.getElementById('startFullBacktest');
+    if (!btn) {
+        console.error("startFullBacktest button not found, retrying...");
+        setTimeout(init, 100);
+        return;
+    }
+
+    console.log("Initializing full backtest...");
+
+    btn.addEventListener('click', async function() {
         let checkedSymbols = Array.from(document.querySelectorAll('.stock-selector input:checked')).map(el => el.value);
         if (checkedSymbols.length === 0) {
             alert('请至少选择一只股票');
@@ -514,8 +523,10 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             // 获取第一只选中股票的数据（用户可以选多只，这里先显示第一个）
             let symbol = checkedSymbols[0];
+            console.log("Starting backtest for:", symbol);
             let data = await fetchDailyData(symbol);
             currentStockData = data;
+            console.log("Got data:", data.length + " candles");
 
             // 计算所有指标
             let closes = data.map(d => d.close);
@@ -546,9 +557,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 data[i].macdBar = macdResult.macd[i];
             }
 
+            console.log("All indicators calculated");
+
             // 回测
             let backtestResult = runBacktest(data, rsi14);
             let metrics = calculateMetrics(backtestResult);
+            console.log("Backtest done:", metrics);
 
             // 显示所有结果
             displayResultSummary(metrics, symbol);
@@ -570,4 +584,11 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('loading').style.display = 'none';
         this.disabled = false;
     });
-});
+}
+
+// 页面加载完成后初始化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
