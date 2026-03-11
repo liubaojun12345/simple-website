@@ -12,20 +12,19 @@ main {
 }
 
 .version-info {
-    text-align: right;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
     color: #64748b;
-    font-size: 0.9rem;
+    font-size: 0.6em;
+    font-weight: normal;
+    vertical-align: super;
+    margin-left: 0.5rem;
 }
 
 .version-info .version {
     background: #1e3a8a;
     color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 15px;
-    margin-right: 0.5rem;
-    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 10px;
+    margin-right: 0.3rem;
 }
 
 .version-info .date {
