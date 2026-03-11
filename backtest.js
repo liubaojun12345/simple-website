@@ -417,9 +417,12 @@ function drawCharts(data, result, rsiValues) {
 }
 
 // 绘制588000日K线图（2026年以来，真实数据）
-async function drawDailyChart() {
+window.drawDailyChart = async function() {
     const dailyCanvas = document.getElementById('dailyChart');
-    if (!dailyCanvas) return;
+    if (!dailyCanvas) {
+        console.error("dailyCanvas not found");
+        return;
+    }
     const dailyCtx = dailyCanvas.getContext('2d');
     if (dailyChartInstance) {
         dailyChartInstance.destroy();
@@ -432,15 +435,21 @@ async function drawDailyChart() {
         const proxyUrl = 'https://api.allorigins.win/get?url=';
         const targetUrl = encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/588000.SS?period1=1735689600&period2=' + Math.floor(Date.now() / 1000) + '&interval=1d');
         
+        console.log("Fetching from: " + proxyUrl + targetUrl);
         const response = await fetch(proxyUrl + targetUrl);
+        console.log("Response status: " + response.status);
+
         if (!response.ok) {
             throw new Error('HTTP error, status = ' + response.status);
         }
         const data = await response.json();
+        console.log("Got data: ", data);
+
         if (!data.contents) {
-            throw new Error('No content received');
+            throw new Error('No content received from proxy');
         }
         const json = JSON.parse(data.contents);
+        console.log("Parsed JSON: ", json);
         
         if (json.chart && json.chart.result && json.chart.result[0]) {
             const result = json.chart.result[0];
@@ -493,8 +502,6 @@ async function drawDailyChart() {
 
 // 显示交易记录
 function displayTrades(positions) {
-    let tbody = document.getElementById('tradesTableBody');
-    tbody.innerHTML = '';
     let tbody = document.getElementById('tradesTableBody');
     tbody.innerHTML = '';
 
