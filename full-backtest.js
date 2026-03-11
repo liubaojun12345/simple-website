@@ -6,19 +6,21 @@ let priceChartInstance = null;
 let equityChartInstance = null;
 let rsiChartInstance = null;
 let macdChartInstance = null;
+let currentKlinePage = 1;
+let currentTradesPage = 1;
+const pageSize = 20;
+let allKlineData = [];
+let allTradesData = [];
 
 // 通过新浪财经API获取日线数据
 async function fetchDailyData(symbol) {
-    // 使用新浪财经行情接口，获取最近3年约750个交易日
     const num = 750;
-    // allorigins.win 解决跨域问题
     const proxyUrl = 'https://api.allorigins.win/get?url=';
     const targetUrl = encodeURIComponent(`https://finance.sina.com.cn/stock/quotes/${symbol}/kline/day/?num=${num}`);
     
     console.log(`Fetching ${symbol}...`);
     
     try {
-        // 换另一种方式，用新浪json接口
         const altUrl = `http://finance.sina.com.cn/realstock/company/${symbol}/nc.js`;
         const response = await fetch(proxyUrl + encodeURIComponent(altUrl));
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -28,7 +30,6 @@ async function fetchDailyData(symbol) {
         return parseSinaData(data.contents, symbol);
     } catch (e) {
         console.error(`Fetch failed for ${symbol}:`, e);
-        // 如果API失败，生成模拟数据
         return generateSimulatedData(symbol, 750);
     }
 }
@@ -36,10 +37,6 @@ async function fetchDailyData(symbol) {
 // 解析新浪数据格式
 function parseSinaData(content, symbol) {
     try {
-        // 提取K线数据
-        const data = [];
-        // 简单解析，实际这里会提取到数据
-        // 如果解析失败，返回模拟数据
         return generateSimulatedData(symbol, 750);
     } catch (e) {
         console.error("Parse error", e);
@@ -49,10 +46,10 @@ function parseSinaData(content, symbol) {
 
 // 生成模拟数据（API失败时备用，符合真实价格范围）
 function generateSimulatedData(symbol, days) {
-    let basePrice = {
-        'sh600000': 8.5,    // 浦发银行
-        'sz000001': 12.5,   // 平安银行
-        'sh588000': 1.5     // 科创50ETF
+    const basePrice = {
+        'sh600000': 8.5,
+        'sz000001': 12.5,
+        'sh588000': 1.5
     };
     let startPrice = basePrice[symbol] || 10;
     let data = [];
@@ -63,19 +60,24 @@ function generateSimulatedData(symbol, days) {
     for (let i = 0; i < days; i++) {
         let dayOfWeek = currentDate.getDay();
         if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-            // 只保留交易日
             let change = (Math.random() - 0.5) * price * 0.02;
             price += change;
             price = Math.max(price, startPrice * 0.7);
             price = Math.min(price, startPrice * 1.5);
             
+            let open = parseFloat((price + (Math.random() - 0.5) * price * 0.005).toFixed(3));
+            let high = parseFloat((price + Math.random() * price * 0.01).toFixed(3));
+            let low = parseFloat((price - Math.random() * price * 0.01).toFixed(3));
+            let close = parseFloat(price.toFixed(3));
+            let volume = Math.floor(Math.random() * 100000000) + 10000000;
+            
             data.push({
                 date: new Date(currentDate),
-                open: parseFloat((price + (Math.random() - 0.5) * price * 0.005).toFixed(3)),
-                high: parseFloat((price + Math.random() * price * 0.01).toFixed(3)),
-                low: parseFloat((price - Math.random() * price * 0.01).toFixed(3)),
-                close: parseFloat(price.toFixed(3)),
-                volume: Math.floor(Math.random() * 100000000) + 10000000
+                open: open,
+                high: high,
+                low: low,
+                close: close,
+                volume: volume
             });
         }
         currentDate.setDate(currentDate.getDate() + 1);
@@ -126,7 +128,6 @@ function calculateRSI(closes, period) {
         rsi.push(100 - (100 / (1 + rs)));
     }
 
-    // 前面补null对齐
     while (rsi.length < closes.length) {
         rsi.unshift(null);
     }
@@ -136,7 +137,6 @@ function calculateRSI(closes, period) {
 
 // 计算MACD
 function calculateMACD(closes, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) {
-    // 计算EMA
     function ema(data, period) {
         let result = [];
         let k = 2 / (period + 1);
@@ -184,7 +184,6 @@ function runBacktest(data, rsi14, oversold = 30, overbought = 70) {
             continue;
         }
 
-        // 更新净值
         if (currentPosition) {
             let pnl = (close - currentPosition.entryPrice) / currentPosition.entryPrice;
             equity.push(equity[equity.length - 1] * (1 + pnl));
@@ -192,15 +191,12 @@ function runBacktest(data, rsi14, oversold = 30, overbought = 70) {
             equity.push(equity[equity.length - 1]);
         }
 
-        // 开仓：RSI从低于 oversold 回升上穿
         if (!currentPosition && prevRsi < oversold && rsi >= oversold) {
             currentPosition = {
                 entryDate: data[i].date,
                 entryPrice: close
             };
-        }
-        // 平仓：RSI从高于 overbought 回落跌破
-        else if (currentPosition && prevRsi > overbought && rsi <= overbought) {
+        } else if (currentPosition && prevRsi > overbought && rsi <= overbought) {
             currentPosition.exitDate = data[i].date;
             currentPosition.exitPrice = close;
             currentPosition.pnl = (currentPosition.exitPrice - currentPosition.entryPrice) / currentPosition.entryPrice;
@@ -209,7 +205,6 @@ function runBacktest(data, rsi14, oversold = 30, overbought = 70) {
         }
     }
 
-    // 平仓剩余持仓
     if (currentPosition) {
         currentPosition.exitDate = data[data.length - 1].date;
         currentPosition.exitPrice = data[data.length - 1].close;
@@ -237,7 +232,6 @@ function calculateMetrics(result) {
     let winningTrades = positions.filter(p => p.pnl > 0).length;
     let totalReturn = equity[equity.length - 1] - 1;
 
-    // 最大回撤
     let maxDrawdown = 0;
     let peak = equity[0];
     for (let e of equity) {
@@ -246,7 +240,6 @@ function calculateMetrics(result) {
         if (drawdown > maxDrawdown) maxDrawdown = drawdown;
     }
 
-    // 夏普比率
     let returns = [];
     for (let i = 1; i < equity.length; i++) {
         returns.push((equity[i] - equity[i - 1]) / equity[i - 1]);
@@ -272,11 +265,10 @@ function drawPriceChart(data) {
 
     let labels = data.map(d => d.date.toLocaleDateString());
     let closes = data.map(d => d.close);
-    let ma5 = data.map((d, i) => d.ma5);
-    let ma20 = data.map((d, i) => d.ma20);
-    let ma60 = data.map((d, i) => d.ma60);
+    let ma5 = data.map(d => d.ma5);
+    let ma20 = data.map(d => d.ma20);
+    let ma60 = data.map(d => d.ma60);
 
-    // 采样
     let step = Math.ceil(labels.length / 100);
     let sampledLabels = [];
     let sampledClose = [];
@@ -418,20 +410,6 @@ function drawMacdChart(data) {
     });
 }
 
-// 分页全局变量
-let currentKlinePage = 1;
-let currentTradesPage = 1;
-const pageSize = 20;
-let allKlineData = [];
-let allTradesData = [];
-
-// 填充指标表格（分页）
-function fillIndicatorsTable(data) {
-    allKlineData = data;
-    currentKlinePage = 1;
-    renderKlinePage();
-}
-
 // 渲染K线指定页
 function renderKlinePage() {
     let tbody = document.getElementById('indicatorsTableBody');
@@ -446,7 +424,6 @@ function renderKlinePage() {
     
     infoContainer.textContent = ` (第 ${currentKlinePage} / ${totalPages} 页，共 ${allKlineData.length} 条)`;
     
-    // 显示当前页数据
     allKlineData.slice(start, end).forEach(d => {
         let row = document.createElement('tr');
         row.innerHTML = `
@@ -470,7 +447,6 @@ function renderKlinePage() {
         tbody.appendChild(row);
     });
     
-    // 生成分页按钮
     paginationContainer.innerHTML = '';
     if (totalPages <= 1) return;
     
@@ -485,7 +461,6 @@ function renderKlinePage() {
     };
     paginationContainer.appendChild(prevBtn);
     
-    // 页码按钮
     for (let i = 1; i <= totalPages; i++) {
         if (i === 1 || i === totalPages || Math.abs(i - currentKlinePage) <= 2) {
             let pageBtn = document.createElement('button');
@@ -517,11 +492,11 @@ function renderKlinePage() {
     paginationContainer.appendChild(nextBtn);
 }
 
-// 填充交易表格（分页）
-function fillTradesTable(positions) {
-    allTradesData = positions.reverse(); // 最新的在前
-    currentTradesPage = 1;
-    renderTradesPage();
+// 填充指标表格（分页）
+function fillIndicatorsTable(data) {
+    allKlineData = data;
+    currentKlinePage = 1;
+    renderKlinePage();
 }
 
 // 渲染交易指定页
@@ -538,7 +513,6 @@ function renderTradesPage() {
     
     infoContainer.textContent = ` (第 ${currentTradesPage} / ${totalPages} 页，共 ${allTradesData.length} 笔)`;
     
-    // 显示当前页数据
     let originalTotal = allTradesData.length;
     allTradesData.slice(start, end).forEach((p, i) => {
         let row = document.createElement('tr');
@@ -556,7 +530,6 @@ function renderTradesPage() {
         tbody.appendChild(row);
     });
     
-    // 生成分页按钮
     paginationContainer.innerHTML = '';
     if (totalPages <= 1) return;
     
@@ -571,7 +544,6 @@ function renderTradesPage() {
     };
     paginationContainer.appendChild(prevBtn);
     
-    // 页码按钮
     for (let i = 1; i <= totalPages; i++) {
         if (i === 1 || i === totalPages || Math.abs(i - currentTradesPage) <= 2) {
             let pageBtn = document.createElement('button');
@@ -603,12 +575,19 @@ function renderTradesPage() {
     paginationContainer.appendChild(nextBtn);
 }
 
+// 填充交易表格（分页）
+function fillTradesTable(positions) {
+    allTradesData = positions.reverse();
+    currentTradesPage = 1;
+    renderTradesPage();
+}
+
 // 显示结果摘要
-function displayResultSummary(metrics, symbol) {
+function displayResultSummary(metrics, title) {
     let container = document.getElementById('resultSummary');
     let isPositive = parseFloat(metrics.totalReturn) >= 0;
     container.innerHTML = `
-        <h3>当前股票：${symbol} (最近3年，RSI14策略)</h3>
+        <h3>回测：${title}</h3>
         <div class="metric-card ${isPositive ? 'positive' : 'negative'}">
             <h4>总收益率</h4>
             <div class="value">${metrics.totalReturn}%</div>
@@ -674,14 +653,12 @@ function init() {
             console.log("Starting backtest with params:", {symbol, startDateVal, endDateVal, rsiOversold, rsiOverbought, period});
             
             // 获取数据，根据周期确定数量
-            let numDays = 1095; // 3年默认
-            if (period === '1m') numDays = 1095; // 1分钟还是按天
-            if (period === '5m') numDays = 1095;
+            let numDays = 1095;
             let data = generateSimulatedData(symbol, numDays);
             
             // 按时间过滤
             let startTime = new Date(startDateVal).getTime();
-            let endTime = new Date(endDateVal).getTime() + 86400000; // 结束当天结束
+            let endTime = new Date(endDateVal).getTime() + 86400000;
             data = data.filter(d => d.date.getTime() >= startTime && d.date.getTime() <= endTime);
             
             if (data.length < 60) {
