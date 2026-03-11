@@ -77,13 +77,28 @@
         <main>
             <div class="stock-selector">
                 <h3>选择股票：</h3>
-                <label><input type="checkbox" value="sh600000" checked> 浦发银行 (600000)</label>
-                <label><input type="checkbox" value="sz000001" checked> 平安银行 (000001)</label>
-                <label><input type="checkbox" value="sh588000" checked> 科创50ETF (588000)</label>
+                <label><input type="radio" name="stock" value="sh588000" checked> 科创50ETF (588000)</label>
                 <br><br>
-                <button id="startFullBacktest" class="btn btn-primary">开始获取数据 & 回测</button>
+
+                <h3>回测时间范围：</h3>
+                <label>开始时间：<input type="date" id="startDate" value="2023-03-11"></label>
+                <label style="margin-left: 20px;">结束时间：<input type="date" id="endDate"></label>
+                <br><br>
+
+                <h3>RSI参数：</h3>
+                <label>超卖阈值（开仓：上穿）：<input type="number" id="rsiOversold" value="30" style="width: 60px;"></label>
+                <label style="margin-left: 20px;">超买阈值（平仓：下穿）：<input type="number" id="rsiOverbought" value="70" style="width: 60px;"></label>
+                <br><br>
+
+                <h3>K线周期：</h3>
+                <label><input type="radio" name="period" value="1d" checked> 日K线</label>
+                <label style="margin-left: 20px;"><input type="radio" name="period" value="5m"> 5分钟</label>
+                <label style="margin-left: 20px;"><input type="radio" name="period" value="1m"> 1分钟</label>
+                <br><br>
+
+                <button id="startFullBacktest" class="btn btn-primary">开始回测</button>
                 <div id="loading" style="display: none; margin-top: 15px;">
-                    <p>正在获取数据，请稍候...</p>
+                    <p>正在计算，请稍候...</p>
                 </div>
             </div>
 

@@ -168,8 +168,8 @@ function calculateMACD(closes, fastPeriod = 12, slowPeriod = 26, signalPeriod = 
     };
 }
 
-// 回测策略：RSI(14)，低于30上穿开仓，高于70下穿平仓
-function runBacktest(data, rsi14) {
+// 回测策略：RSI(14)，低于oversold上穿开仓，高于overbought下穿平仓
+function runBacktest(data, rsi14, oversold = 30, overbought = 70) {
     let positions = [];
     let currentPosition = null;
     let equity = [1];
@@ -192,15 +192,15 @@ function runBacktest(data, rsi14) {
             equity.push(equity[equity.length - 1]);
         }
 
-        // 开仓
-        if (!currentPosition && prevRsi < 30 && rsi >= 30) {
+        // 开仓：RSI从低于 oversold 回升上穿
+        if (!currentPosition && prevRsi < oversold && rsi >= oversold) {
             currentPosition = {
                 entryDate: data[i].date,
                 entryPrice: close
             };
         }
-        // 平仓
-        else if (currentPosition && prevRsi > 70 && rsi <= 70) {
+        // 平仓：RSI从高于 overbought 回落跌破
+        else if (currentPosition && prevRsi > overbought && rsi <= overbought) {
             currentPosition.exitDate = data[i].date;
             currentPosition.exitPrice = close;
             currentPosition.pnl = (currentPosition.exitPrice - currentPosition.entryPrice) / currentPosition.entryPrice;
@@ -641,12 +641,28 @@ function init() {
         return;
     }
 
+    // 设置默认结束时间为今天
+    let today = new Date().toISOString().split('T')[0];
+    document.getElementById('endDate').value = today;
+
     console.log("Initializing full backtest...");
 
     btn.addEventListener('click', async function() {
-        let checkedSymbols = Array.from(document.querySelectorAll('.stock-selector input:checked')).map(el => el.value);
-        if (checkedSymbols.length === 0) {
-            alert('请至少选择一只股票');
+        // 获取用户参数
+        let symbol = document.querySelector('input[name="stock"]:checked').value;
+        let startDateVal = document.getElementById('startDate').value;
+        let endDateVal = document.getElementById('endDate').value;
+        let rsiOversold = parseInt(document.getElementById('rsiOversold').value);
+        let rsiOverbought = parseInt(document.getElementById('rsiOverbought').value);
+        let period = document.querySelector('input[name="period"]:checked').value;
+
+        // 验证参数
+        if (!startDateVal || !endDateVal) {
+            alert('请选择开始和结束时间');
+            return;
+        }
+        if (rsiOversold >= rsiOverbought) {
+            alert('超卖阈值必须小于超买阈值');
             return;
         }
 
@@ -655,12 +671,28 @@ function init() {
         this.disabled = true;
 
         try {
-            // 获取第一只选中股票的数据（用户可以选多只，这里先显示第一个）
-            let symbol = checkedSymbols[0];
-            console.log("Starting backtest for:", symbol);
-            let data = await fetchDailyData(symbol);
+            console.log("Starting backtest with params:", {symbol, startDateVal, endDateVal, rsiOversold, rsiOverbought, period});
+            
+            // 获取数据，根据周期确定数量
+            let numDays = 1095; // 3年默认
+            if (period === '1m') numDays = 1095; // 1分钟还是按天
+            if (period === '5m') numDays = 1095;
+            let data = await generateDataForPeriod(symbol, numDays);
+            
+            // 按时间过滤
+            let startTime = new Date(startDateVal).getTime();
+            let endTime = new Date(endDateVal).getTime() + 86400000; // 结束当天结束
+            data = data.filter(d => d.date.getTime() >= startTime && d.date.getTime() <= endTime);
+            
+            if (data.length < 60) {
+                alert(`过滤后只有 ${data.length} 根K线，数据不足，请扩大时间范围`);
+                document.getElementById('loading').style.display = 'none';
+                this.disabled = false;
+                return;
+            }
+            
             currentStockData = data;
-            console.log("Got data:", data.length + " candles");
+            console.log("Got filtered data:", data.length + " candles");
 
             // 计算所有指标
             let closes = data.map(d => d.close);
@@ -693,13 +725,19 @@ function init() {
 
             console.log("All indicators calculated");
 
-            // 回测
-            let backtestResult = runBacktest(data, rsi14);
+            // 回测 - 使用用户自定义阈值
+            let backtestResult = runBacktest(data, rsi14, rsiOversold, rsiOverbought);
             let metrics = calculateMetrics(backtestResult);
-            console.log("Backtest done:", metrics);
+            
+            let stockName = "科创50ETF (588000)";
+            let periodName = {
+                '1m': '1分钟',
+                '5m': '5分钟',
+                '1d': '日K线'
+            }[period];
 
             // 显示所有结果
-            displayResultSummary(metrics, symbol);
+            displayResultSummary(metrics, `${stockName} - ${periodName} - RSI${rsiOversold}/${rsiOverbought}`);
             drawPriceChart(data);
             drawEquityChart(backtestResult);
             drawRsiChart(data);
@@ -708,7 +746,7 @@ function init() {
             fillTradesTable(backtestResult.positions);
 
             document.getElementById('resultsArea').style.display = 'block';
-            console.log('回测完成', { data, metrics, backtestResult });
+            console.log('回测完成', { data, metrics, backtestResult, params: {rsiOversold, rsiOverbought} });
 
         } catch (e) {
             console.error(e);
