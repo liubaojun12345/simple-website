@@ -250,20 +250,13 @@ function calculateMetrics(result) {
 // 绘制图表
 let equityChartInstance = null;
 let rsiChartInstance = null;
+let priceChartInstance = null;
 
 function drawCharts(data, result, rsiValues) {
     // 先确保结果区域显示
     document.getElementById('resultsSection').style.display = 'block';
-
+    
     setTimeout(() => {
-        // 净值曲线
-        const equityCanvas = document.getElementById('equityChart');
-        if (!equityCanvas) return;
-        const equityCtx = equityCanvas.getContext('2d');
-        if (equityChartInstance) {
-            equityChartInstance.destroy();
-        }
-
         let equityData = result.equity;
         let labels = data.map(d => {
             return d.time.toLocaleDateString() + ' ' + d.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -285,6 +278,14 @@ function drawCharts(data, result, rsiValues) {
                 sampledRsi.push(null);
             }
             sampledClose.push(data[i].close);
+        }
+
+        // 净值曲线
+        const equityCanvas = document.getElementById('equityChart');
+        if (!equityCanvas) return;
+        const equityCtx = equityCanvas.getContext('2d');
+        if (equityChartInstance) {
+            equityChartInstance.destroy();
         }
 
         equityChartInstance = new Chart(equityCtx, {
@@ -334,16 +335,7 @@ function drawCharts(data, result, rsiValues) {
                     borderColor: '#d4af37',
                     backgroundColor: 'rgba(212, 175, 55, 0.1)',
                     fill: false,
-                    tension: 0.1,
-                    yAxisID: 'y'
-                }, {
-                    label: '价格',
-                    data: sampledClose,
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    fill: false,
-                    tension: 0.1,
-                    yAxisID: 'y1'
+                    tension: 0.1
                 }, {
                     label: '超买线 70',
                     data: Array(sampledLabels.length).fill(70),
@@ -351,8 +343,7 @@ function drawCharts(data, result, rsiValues) {
                     borderWidth: 1,
                     borderDash: [5, 5],
                     pointRadius: 0,
-                    fill: false,
-                    yAxisID: 'y'
+                    fill: false
                 }, {
                     label: '超卖线 30',
                     data: Array(sampledLabels.length).fill(30),
@@ -360,8 +351,7 @@ function drawCharts(data, result, rsiValues) {
                     borderWidth: 1,
                     borderDash: [5, 5],
                     pointRadius: 0,
-                    fill: false,
-                    yAxisID: 'y'
+                    fill: false
                 }]
             },
             options: {
@@ -374,19 +364,45 @@ function drawCharts(data, result, rsiValues) {
                 },
                 scales: {
                     y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
                         min: 0,
                         max: 100
-                    },
-                    y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        grid: {
-                            drawOnChartArea: false
-                        }
+                    }
+                }
+            }
+        });
+
+        // 价格走势图 (单独一张图)
+        const priceCanvas = document.getElementById('priceChart');
+        if (!priceCanvas) return;
+        const priceCtx = priceCanvas.getContext('2d');
+        if (priceChartInstance) {
+            priceChartInstance.destroy();
+        }
+
+        priceChartInstance = new Chart(priceCtx, {
+            type: 'line',
+            data: {
+                labels: sampledLabels,
+                datasets: [{
+                    label: '588000 价格',
+                    data: sampledClose,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false
                     }
                 }
             }
