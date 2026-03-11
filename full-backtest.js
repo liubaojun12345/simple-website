@@ -418,13 +418,36 @@ function drawMacdChart(data) {
     });
 }
 
-// 填充指标表格
-function fillIndicatorsTable(data) {
-    let tbody = document.getElementById('indicatorsTableBody');
-    tbody.innerHTML = '';
+// 分页全局变量
+let currentKlinePage = 1;
+let currentTradesPage = 1;
+const pageSize = 20;
+let allKlineData = [];
+let allTradesData = [];
 
-    // 显示最近50条
-    data.slice(-50).forEach(d => {
+// 填充指标表格（分页）
+function fillIndicatorsTable(data) {
+    allKlineData = data;
+    currentKlinePage = 1;
+    renderKlinePage();
+}
+
+// 渲染K线指定页
+function renderKlinePage() {
+    let tbody = document.getElementById('indicatorsTableBody');
+    let paginationContainer = document.getElementById('klinePagination');
+    let infoContainer = document.getElementById('klinePaginationInfo');
+    
+    tbody.innerHTML = '';
+    
+    const totalPages = Math.ceil(allKlineData.length / pageSize);
+    const start = (currentKlinePage - 1) * pageSize;
+    const end = Math.min(start + pageSize, allKlineData.length);
+    
+    infoContainer.textContent = ` (第 ${currentKlinePage} / ${totalPages} 页，共 ${allKlineData.length} 条)`;
+    
+    // 显示当前页数据
+    allKlineData.slice(start, end).forEach(d => {
         let row = document.createElement('tr');
         row.innerHTML = `
             <td>${d.date.toLocaleDateString()}</td>
@@ -446,19 +469,84 @@ function fillIndicatorsTable(data) {
         `;
         tbody.appendChild(row);
     });
+    
+    // 生成分页按钮
+    paginationContainer.innerHTML = '';
+    if (totalPages <= 1) return;
+    
+    let prevBtn = document.createElement('button');
+    prevBtn.textContent = '上一页';
+    prevBtn.style.cssText = 'padding: 8px 16px; margin: 0 5px; cursor: pointer; background: ' + (currentKlinePage > 1 ? '#2563eb' : '#ccc') + '; color: white; border: none; border-radius: 4px;';
+    prevBtn.disabled = currentKlinePage <= 1;
+    prevBtn.onclick = () => {
+        currentKlinePage--;
+        renderKlinePage();
+        window.scrollTo({top: document.getElementById('klinePagination').offsetTop - 100, behavior: 'smooth'});
+    };
+    paginationContainer.appendChild(prevBtn);
+    
+    // 页码按钮
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || Math.abs(i - currentKlinePage) <= 2) {
+            let pageBtn = document.createElement('button');
+            pageBtn.textContent = i;
+            pageBtn.style.cssText = 'padding: 8px 14px; margin: 0 2px; cursor: pointer; border: 1px solid #ddd; border-radius: 4px; background: ' + (i === currentKlinePage ? '#2563eb' : 'white') + '; color: ' + (i === currentKlinePage ? 'white' : '#333') + ';';
+            pageBtn.onclick = () => {
+                currentKlinePage = i;
+                renderKlinePage();
+                window.scrollTo({top: document.getElementById('klinePagination').offsetTop - 100, behavior: 'smooth'});
+            };
+            paginationContainer.appendChild(pageBtn);
+        } else if (i === currentKlinePage - 3 || i === currentKlinePage + 3) {
+            let ellipsis = document.createElement('span');
+            ellipsis.textContent = '...';
+            ellipsis.style.cssText = 'padding: 0 8px; color: #999;';
+            paginationContainer.appendChild(ellipsis);
+        }
+    }
+    
+    let nextBtn = document.createElement('button');
+    nextBtn.textContent = '下一页';
+    nextBtn.style.cssText = 'padding: 8px 16px; margin: 0 5px; cursor: pointer; background: ' + (currentKlinePage < totalPages ? '#2563eb' : '#ccc') + '; color: white; border: none; border-radius: 4px;';
+    nextBtn.disabled = currentKlinePage >= totalPages;
+    nextBtn.onclick = () => {
+        currentKlinePage++;
+        renderKlinePage();
+        window.scrollTo({top: document.getElementById('klinePagination').offsetTop - 100, behavior: 'smooth'});
+    };
+    paginationContainer.appendChild(nextBtn);
 }
 
-// 填充交易表格
+// 填充交易表格（分页）
 function fillTradesTable(positions) {
-    let tbody = document.getElementById('tradesTableBody');
-    tbody.innerHTML = '';
+    allTradesData = positions.reverse(); // 最新的在前
+    currentTradesPage = 1;
+    renderTradesPage();
+}
 
-    positions.slice(-20).reverse().forEach((p, i) => {
+// 渲染交易指定页
+function renderTradesPage() {
+    let tbody = document.getElementById('tradesTableBody');
+    let paginationContainer = document.getElementById('tradesPagination');
+    let infoContainer = document.getElementById('tradesPaginationInfo');
+    
+    tbody.innerHTML = '';
+    
+    const totalPages = Math.ceil(allTradesData.length / pageSize);
+    const start = (currentTradesPage - 1) * pageSize;
+    const end = Math.min(start + pageSize, allTradesData.length);
+    
+    infoContainer.textContent = ` (第 ${currentTradesPage} / ${totalPages} 页，共 ${allTradesData.length} 笔)`;
+    
+    // 显示当前页数据
+    let originalTotal = allTradesData.length;
+    allTradesData.slice(start, end).forEach((p, i) => {
         let row = document.createElement('tr');
         let pnlPercent = (p.pnl * 100).toFixed(2);
         let pnlClass = p.pnl >= 0 ? 'positive-return' : 'negative-return';
+        let index = start + i + 1;
         row.innerHTML = `
-            <td>${positions.length - i}</td>
+            <td>${index}</td>
             <td>${p.entryDate.toLocaleDateString()}</td>
             <td>${p.entryPrice.toFixed(3)}</td>
             <td>${p.exitDate.toLocaleDateString()}</td>
@@ -467,6 +555,52 @@ function fillTradesTable(positions) {
         `;
         tbody.appendChild(row);
     });
+    
+    // 生成分页按钮
+    paginationContainer.innerHTML = '';
+    if (totalPages <= 1) return;
+    
+    let prevBtn = document.createElement('button');
+    prevBtn.textContent = '上一页';
+    prevBtn.style.cssText = 'padding: 8px 16px; margin: 0 5px; cursor: pointer; background: ' + (currentTradesPage > 1 ? '#2563eb' : '#ccc') + '; color: white; border: none; border-radius: 4px;';
+    prevBtn.disabled = currentTradesPage <= 1;
+    prevBtn.onclick = () => {
+        currentTradesPage--;
+        renderTradesPage();
+        window.scrollTo({top: document.getElementById('tradesPagination').offsetTop - 100, behavior: 'smooth'});
+    };
+    paginationContainer.appendChild(prevBtn);
+    
+    // 页码按钮
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || Math.abs(i - currentTradesPage) <= 2) {
+            let pageBtn = document.createElement('button');
+            pageBtn.textContent = i;
+            pageBtn.style.cssText = 'padding: 8px 14px; margin: 0 2px; cursor: pointer; border: 1px solid #ddd; border-radius: 4px; background: ' + (i === currentTradesPage ? '#2563eb' : 'white') + '; color: ' + (i === currentTradesPage ? 'white' : '#333') + ';';
+            pageBtn.onclick = () => {
+                currentTradesPage = i;
+                renderTradesPage();
+                window.scrollTo({top: document.getElementById('tradesPagination').offsetTop - 100, behavior: 'smooth'});
+            };
+            paginationContainer.appendChild(pageBtn);
+        } else if (i === currentTradesPage - 3 || i === currentTradesPage + 3) {
+            let ellipsis = document.createElement('span');
+            ellipsis.textContent = '...';
+            ellipsis.style.cssText = 'padding: 0 8px; color: #999;';
+            paginationContainer.appendChild(ellipsis);
+        }
+    }
+    
+    let nextBtn = document.createElement('button');
+    nextBtn.textContent = '下一页';
+    nextBtn.style.cssText = 'padding: 8px 16px; margin: 0 5px; cursor: pointer; background: ' + (currentTradesPage < totalPages ? '#2563eb' : '#ccc') + '; color: white; border: none; border-radius: 4px;';
+    nextBtn.disabled = currentTradesPage >= totalPages;
+    nextBtn.onclick = () => {
+        currentTradesPage++;
+        renderTradesPage();
+        window.scrollTo({top: document.getElementById('tradesPagination').offsetTop - 100, behavior: 'smooth'});
+    };
+    paginationContainer.appendChild(nextBtn);
 }
 
 // 显示结果摘要

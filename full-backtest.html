@@ -111,7 +111,7 @@
                     <canvas id="macdChart"></canvas>
                 </div>
 
-                <h3>最近50条K线数据（含指标）</h3>
+                <h3>K线数据（含指标）<span id="klinePaginationInfo"></span></h3>
                 <table class="indicators-table">
                     <thead>
                         <tr>
@@ -129,15 +129,18 @@
                             <th>MA20</th>
                             <th>MA60</th>
                             <th>MACD</th>
-                            <th>信号</th>
+                            <th>DEA</th>
                             <th>柱状图</th>
                         </tr>
                     </thead>
                     <tbody id="indicatorsTableBody">
                     </tbody>
                 </table>
+                <div id="klinePagination" style="text-align: center; margin: 15px 0;">
+                    <!-- Pagination buttons will be generated here -->
+                </div>
 
-                <h3>交易记录（最近20笔）</h3>
+                <h3>交易记录<span id="tradesPaginationInfo"></span></h3>
                 <table class="indicators-table">
                     <thead>
                         <tr>
@@ -152,6 +155,9 @@
                     <tbody id="tradesTableBody">
                     </tbody>
                 </table>
+                <div id="tradesPagination" style="text-align: center; margin: 15px 0 30px 0;">
+                    <!-- Pagination buttons will be generated here -->
+                </div>
             </div>
         </main>
 
