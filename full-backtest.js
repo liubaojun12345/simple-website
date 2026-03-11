@@ -677,7 +677,7 @@ function init() {
             let numDays = 1095; // 3年默认
             if (period === '1m') numDays = 1095; // 1分钟还是按天
             if (period === '5m') numDays = 1095;
-            let data = await generateDataForPeriod(symbol, numDays);
+            let data = generateSimulatedData(symbol, numDays);
             
             // 按时间过滤
             let startTime = new Date(startDateVal).getTime();
