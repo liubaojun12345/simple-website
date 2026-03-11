@@ -34,11 +34,11 @@ async function fetchData() {
         // 使用10jqka接口获取数据，通过allorigins.win代理解决跨域
         const proxyUrl = 'https://api.allorigins.win/get?url=';
         const targetUrl = encodeURIComponent('http://api.10jqka.com.cn/v1/kline/min?symbol=SH.588000');
-        
+
         const response = await fetch(proxyUrl + targetUrl);
         const data = await response.json();
         const json = JSON.parse(data.contents);
-        
+
         if (json && json.data && json.data.length > 0) {
             console.log(`Got ${json.data.length} real 1min candles from 10jqka`);
             const parsedData = json.data.map(item => {
@@ -74,7 +74,7 @@ function generateSampleData() {
     let basePrice = 0.85;
     let currentDate = new Date("2026-01-01");
     let endDate = new Date(); // 到今天
-    
+
     // 从2026年1月1日遍历到今天
     while (currentDate <= endDate) {
         let dayOfWeek = currentDate.getDay(); // 0=周日, 6=周六
@@ -89,7 +89,7 @@ function generateSampleData() {
                 let candle = createCandle(time, basePrice);
                 data.push(candle);
             }
-            
+
             // 下午交易时段 13:00-15:00
             let afternoonStart = new Date(currentDate);
             afternoonStart.setHours(13, 0, 0, 0);
@@ -100,11 +100,11 @@ function generateSampleData() {
                 data.push(candle);
             }
         }
-        
+
         // 下一天
         currentDate.setDate(currentDate.getDate() + 1);
     }
-    
+
     console.log(`Generated ${data.length} 1min candles (trading hours only) from 2026-01-01`);
     return data;
 }
@@ -126,11 +126,11 @@ function createCandle(time, basePrice) {
     let close = basePrice + (Math.random() - 0.5) * 0.008;
     let high = Math.max(open, close) + Math.random() * 0.004;
     let low = Math.min(open, close) - Math.random() * 0.004;
-    
+
     // 保证价格合理
     high = Math.max(high, open, close);
     low = Math.min(low, open, close);
-    
+
     return {
         time: time,
         open: open,
@@ -152,7 +152,7 @@ function runBacktest(data, rsiValues) {
         let rsi = rsiValues[i];
         let currentClose = data[i].close;
         let prevRsi = rsiValues[i - 1];
-        
+
         if (prevRsi === null || rsi === null) continue;
 
         // 计算当前净值
@@ -214,7 +214,7 @@ function calculateMetrics(result) {
 
     let winningTrades = positions.filter(p => p.pnl > 0).length;
     let totalReturn = equity[equity.length - 1] - 1;
-    
+
     // 计算最大回撤
     let maxDrawdown = 0;
     let peak = equity[0];
@@ -254,7 +254,7 @@ let rsiChartInstance = null;
 function drawCharts(data, result, rsiValues) {
     // 先确保结果区域显示
     document.getElementById('resultsSection').style.display = 'block';
-    
+
     setTimeout(() => {
         // 净值曲线
         const equityCanvas = document.getElementById('equityChart');
@@ -274,7 +274,8 @@ function drawCharts(data, result, rsiValues) {
         let sampledLabels = [];
         let sampledEquity = [];
         let sampledRsi = [];
-
+        let sampledClose = [];
+        
         for (let i = 0; i < labels.length; i += sampleStep) {
             sampledLabels.push(labels[i]);
             sampledEquity.push(equityData[i] * 100 - 100);
@@ -283,6 +284,7 @@ function drawCharts(data, result, rsiValues) {
             } else {
                 sampledRsi.push(null);
             }
+            sampledClose.push(data[i].close);
         }
 
         equityChartInstance = new Chart(equityCtx, {
@@ -332,7 +334,16 @@ function drawCharts(data, result, rsiValues) {
                     borderColor: '#d4af37',
                     backgroundColor: 'rgba(212, 175, 55, 0.1)',
                     fill: false,
-                    tension: 0.1
+                    tension: 0.1,
+                    yAxisID: 'y'
+                }, {
+                    label: '价格',
+                    data: sampledClose,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: false,
+                    tension: 0.1,
+                    yAxisID: 'y1'
                 }, {
                     label: '超买线 70',
                     data: Array(sampledLabels.length).fill(70),
@@ -340,7 +351,8 @@ function drawCharts(data, result, rsiValues) {
                     borderWidth: 1,
                     borderDash: [5, 5],
                     pointRadius: 0,
-                    fill: false
+                    fill: false,
+                    yAxisID: 'y'
                 }, {
                     label: '超卖线 30',
                     data: Array(sampledLabels.length).fill(30),
@@ -348,7 +360,8 @@ function drawCharts(data, result, rsiValues) {
                     borderWidth: 1,
                     borderDash: [5, 5],
                     pointRadius: 0,
-                    fill: false
+                    fill: false,
+                    yAxisID: 'y'
                 }]
             },
             options: {
@@ -361,8 +374,19 @@ function drawCharts(data, result, rsiValues) {
                 },
                 scales: {
                     y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
                         min: 0,
                         max: 100
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: {
+                            drawOnChartArea: false
+                        }
                     }
                 }
             }
@@ -379,7 +403,7 @@ function displayTrades(positions) {
         let row = document.createElement('tr');
         let pnlPercent = (p.pnl * 100).toFixed(2);
         let pnlClass = p.pnl >= 0 ? 'positive-return' : 'negative-return';
-        
+
         row.innerHTML = `
             <td>${positions.length - i}</td>
             <td>${p.entryTime.toLocaleString()}</td>
@@ -397,19 +421,19 @@ function displayResults(result, metrics, data, rsiValues) {
     document.getElementById('totalTrades').textContent = metrics.totalTrades;
     document.getElementById('winningTrades').textContent = metrics.winningTrades;
     document.getElementById('winRate').textContent = metrics.winRate + '%';
-    
+
     let totalReturnEl = document.getElementById('totalReturn');
     totalReturnEl.textContent = metrics.totalReturn + '%';
     totalReturnEl.className = 'metric-value ' + (metrics.totalReturn >= 0 ? 'positive' : 'negative');
-    
+
     let maxDrawdownEl = document.getElementById('maxDrawdown');
     maxDrawdownEl.textContent = metrics.maxDrawdown + '%';
     maxDrawdownEl.className = 'metric-value negative';
-    
+
     document.getElementById('sharpeRatio').textContent = metrics.sharpeRatio;
 
     displayTrades(result.positions);
-    
+
     // 绘制图表
     drawCharts(data, result, rsiValues);
 }
