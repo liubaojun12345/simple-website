@@ -240,7 +240,7 @@
         async function loadTechNews() {
             const container = document.getElementById('news-container');
             const rssUrl = 'https://feed.sina.com.cn/feed/tech/it';
-            const apiUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`;
+            const apiUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(rssUrl);
 
             try {
                 const response = await fetch(apiUrl);
@@ -258,18 +258,16 @@
                 const topItems = Array.from(items).slice(0, 10);
                 let html = '';
 
-                topItems.forEach(item => {
+                topItems.forEach(function(item) {
                     const title = item.querySelector('title').textContent;
                     const link = item.querySelector('link').textContent;
                     const pubDate = item.querySelector('pubDate').textContent;
                     const date = new Date(pubDate).toLocaleString('zh-CN');
                     
-                    html += `
-                        <div class="news-item">
-                            <a href="${link}" target="_blank" class="news-title">${title}</a>
-                            <div class="news-date">发布时间：${date}</div>
-                        </div>
-                    `;
+                    html += '<div class="news-item">' +
+                        '<a href="' + link + '" target="_blank" class="news-title">' + title + '</a>' +
+                        '<div class="news-date">发布时间：' + date + '</div>' +
+                        '</div>';
                 });
 
                 container.innerHTML = html;
