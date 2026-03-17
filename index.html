@@ -1,93 +1,258 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>期权世界 - Options World</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="description" content="刘保军的个人网站 - 专注ETF期权量化策略研究与自动化交易">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary-color: #2563eb;
+            --text-color: #1f2937;
+            --light-text: #6b7280;
+            --bg-color: #f9fafb;
+            --card-bg: #ffffff;
+            --border-color: #e5e7eb;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 1.2em;
+            color: var(--light-text);
+            font-weight: 400;
+        }
+        section {
+            background: var(--card-bg);
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+        h2 {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 20px;
+            padding-left: 15px;
+            border-left: 4px solid var(--primary-color);
+        }
+        h3 {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin: 15px 0 10px;
+            color: var(--text-color);
+        }
+        p {
+            margin-bottom: 15px;
+            color: var(--light-text);
+        }
+        ul {
+            padding-left: 25px;
+            margin-bottom: 15px;
+        }
+        li {
+            margin-bottom: 10px;
+            color: var(--light-text);
+        }
+        li strong {
+            color: var(--text-color);
+        }
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .contact-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        .contact-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .news-item {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .news-item:last-child {
+            border-bottom: none;
+        }
+        .news-title {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        .news-date {
+            font-size: 0.9em;
+            color: var(--light-text);
+        }
+        #news-loading {
+            color: var(--light-text);
+            font-style: italic;
+        }
+        #news-error {
+            color: #ef4444;
+        }
+        footer {
+            text-align: center;
+            color: var(--light-text);
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid var(--border-color);
+        }
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2em;
+            }
+            section {
+                padding: 20px;
+            }
+            .container {
+                padding: 20px 15px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <div class="logo">期权世界</div>
-            <ul class="nav-links">
-                <li><a href="#home">Home</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#portfolio">Portfolio</a></li>
-                <li><a href="#contact">Contact</a></li>
+    <div class="container">
+        <header>
+            <h1>期权世界</h1>
+            <p class="subtitle">Options World · 专注ETF期权量化策略研究 & 自动化交易</p>
+        </header>
+
+        <section>
+            <h2>关于我</h2>
+            <p>你好，我是刘保军，一名实战派期权交易者，沉迷于用量化方法探索期权市场的概率优势，实现自动化稳定盈利。</p>
+            <ul>
+                <li>多年A股ETF期权实战经验，擅长构建价差组合，做好风险管理</li>
+                <li>坚持「量化+自动交易」，用程序克服人性弱点，严格执行策略信号</li>
+                <li>专注宽基期权（科创50、创业板），少即是多，专注才能专业</li>
+                <li>相信复利的力量，接受小亏损，放大盈利，追求长期稳定收益</li>
             </ul>
-            <div class="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
+        </section>
+
+        <section>
+            <h2>核心策略研究</h2>
+            <h3>RSI 优化熊市价差策略</h3>
+            <ul>
+                <li><strong>策略逻辑</strong>：针对创业板/科创50ETF，RSI超买回落→卖出低行权认沽；RSI超卖回升→买入高行权认沽，构建标准熊市价差组合</li>
+                <li><strong>胜率优化</strong>：原创多重过滤——200日均线趋势过滤+成交量确认+隐含波动率筛选，过滤无效信号，提升整体胜率</li>
+                <li><strong>灵活配置</strong>：支持永久持有，也可配置主动止盈，满足不同交易习惯</li>
+                <li><strong>全自动化</strong>：基于Python+QMT实现全自动交易，盘中无需人工干预</li>
+                <li><strong>风险特征</strong>：最大亏损有限，时间衰减对策略有利，适合震荡下跌行情</li>
+            </ul>
+
+            <h3>策略特点</h3>
+            <ul>
+                <li>✅ 有限亏损：最坏情况亏损锁定，不会爆仓</li>
+                <li>✅ 不折腾：支持永久持有，不必要每日交易</li>
+                <li>✅ 信号清晰：严格按技术指标执行，避免情绪化判断</li>
+                <li>✅ 适配A股：专门针对国内宽基ETF期权优化参数</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>最新科技资讯</h2>
+            <p>自动抓取新浪财经科技行业最新新闻，每次刷新展示最新10条：</p>
+            <div id="news-container">
+                <div id="news-loading">加载中...</div>
             </div>
-        </nav>
-    </header>
+        </section>
 
-    <section id="home" class="hero">
-        <div class="hero-content">
-            <h1>欢迎进入期权世界</h1>
-            <p>探索期权交易的无限可能，掌握金融衍生品投资技巧</p>
-            <a href="backtest.html" class="btn">开始探索</a>
-        </div>
-    </section>
+        <section>
+            <h2>交易理念</h2>
+            <ul>
+                <li><strong>概率优先</strong>：只做概率优势明确的机会，接受单次交易的不确定性</li>
+                <li><strong>风险第一</strong>：期权是杠杆工具，仓位控制永远放在第一位</li>
+                <li><strong>专业专注</strong>：只交易自己熟悉的品种，只做自己看得懂的行情</li>
+                <li><strong>拒绝暴富</strong>：不追求一夜爆赚，追求慢慢变富的复利</li>
+                <li><strong>工具赋能</strong>：用量化发现规律，用自动化克服人性贪婪恐惧</li>
+            </ul>
+        </section>
 
-    <section id="about" class="about">
-        <div class="container">
-            <h2>About Me</h2>
-            <div class="about-content">
-                <div class="about-text">
-                    <p>Add your about me content here. Tell visitors who you are and what you do.</p>
-                    <p>You can talk about your interests, experience, and goals.</p>
-                </div>
-                <div class="about-image">
-                    <div class="placeholder-image">Your Photo</div>
-                </div>
-            </div>
-        </div>
-    </section>
+        <section>
+            <h2>联系方式</h2>
+            <ul class="contact-list">
+                <li>👉 GitHub：<a href="https://github.com/liubaojun12345" target="_blank">github.com/liubaojun12345</a></li>
+                <li>📧 邮箱：<a href="mailto:120246836@qq.com">120246836@qq.com</a></li>
+            </ul>
+            <p>欢迎交流期权交易、量化自动化相关话题，共同进步。</p>
+        </section>
 
-    <section id="portfolio" class="portfolio">
-        <div class="container">
-            <h2>My Portfolio</h2>
-            <div class="portfolio-grid">
-                <div class="portfolio-item">
-                    <div class="portfolio-placeholder">Project 1</div>
-                    <h3>Project Title 1</h3>
-                    <p>Project description goes here</p>
-                </div>
-                <div class="portfolio-item">
-                    <div class="portfolio-placeholder">Project 2</div>
-                    <h3>Project Title 2</h3>
-                    <p>Project description goes here</p>
-                </div>
-                <div class="portfolio-item">
-                    <div class="portfolio-placeholder">Project 3</div>
-                    <h3>Project Title 3</h3>
-                    <p>Project description goes here</p>
-                </div>
-            </div>
-        </div>
-    </section>
+        <footer>
+            <p>© 2026 期权世界 · Options World</p>
+            <p>专注ETF期权量化 · 让策略自动奔跑</p>
+        </footer>
+    </div>
 
-    <section id="contact" class="contact">
-        <div class="container">
-            <h2>Contact Me</h2>
-            <form id="contact-form">
-                <input type="text" placeholder="Your Name" required>
-                <input type="email" placeholder="Your Email" required>
-                <textarea placeholder="Your Message" rows="5" required></textarea>
-                <button type="submit" class="btn">Send Message</button>
-            </form>
-        </div>
-    </section>
+    <script>
+        // 获取最新科技新闻
+        async function loadTechNews() {
+            const container = document.getElementById('news-container');
+            const rssUrl = 'https://feed.sina.com.cn/feed/tech/it';
+            const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
 
-    <footer>
-        <div class="container">
-            <p>&copy; 2026 My Personal Website. All rights reserved.</p>
-        </div>
-    </footer>
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
 
-    <script src="script.js"></script>
+                if (data.status !== 'ok') {
+                    container.innerHTML = '<div id="news-error">暂时无法加载科技新闻，请稍后刷新重试</div>';
+                    return;
+                }
+
+                // 只取最新10条
+                const items = data.items.slice(0, 10);
+                let html = '';
+
+                items.forEach(item => {
+                    const pubDate = new Date(item.pubDate).toLocaleString('zh-CN');
+                    html += `
+                        <div class="news-item">
+                            <a href="${item.link}" target="_blank" class="news-title">${item.title}</a>
+                            <div class="news-date">发布时间：${pubDate}</div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('加载新闻失败', error);
+                container.innerHTML = '<div id="news-error">加载科技新闻失败，请刷新页面重试</div>';
+            }
+        }
+
+        // 页面加载完成后获取新闻
+        window.addEventListener('load', loadTechNews);
+    </script>
 </body>
 </html>
