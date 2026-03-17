@@ -109,28 +109,6 @@
             align-items: center;
             gap: 10px;
         }
-        .news-item {
-            padding: 12px 0;
-            border-bottom: 1px solid #e8e8e8;
-        }
-        .news-item:last-child {
-            border-bottom: none;
-        }
-        .news-title {
-            font-weight: 500;
-            color: var(--text-color);
-        }
-        .news-date {
-            font-size: 0.9em;
-            color: var(--light-text);
-        }
-        #news-loading {
-            color: var(--light-text);
-            font-style: italic;
-        }
-        #news-error {
-            color: #c0392b;
-        }
         footer {
             text-align: center;
             color: var(--light-text);
@@ -202,14 +180,6 @@
         </section>
 
         <section>
-            <h2>最新财经资讯</h2>
-            <p>自动抓取新浪财经科技行业最新新闻，每次刷新展示最新10条：</p>
-            <div id="news-container">
-                <div id="news-loading">加载中...</div>
-            </div>
-        </section>
-
-        <section>
             <h2>交易理念</h2>
             <ul>
                 <li><strong>概率优先</strong>：只做概率优势明确的机会，接受单次交易的不确定性</li>
@@ -234,51 +204,5 @@
             <p>专注ETF期权量化 · 让策略自动奔跑</p>
         </footer>
     </div>
-
-    <script>
-        // 获取最新财经新闻 - 正确解析XML RSS
-        async function loadTechNews() {
-            const container = document.getElementById('news-container');
-            const rssUrl = 'https://feed.sina.com.cn/feed/tech/it';
-            const apiUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(rssUrl);
-
-            try {
-                const response = await fetch(apiUrl);
-                const xmlText = await response.text();
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-                
-                const items = xmlDoc.querySelectorAll('item');
-                if (!items || items.length === 0) {
-                    container.innerHTML = '<div id="news-error">暂时无法获取新闻，请稍后刷新重试</div>';
-                    return;
-                }
-
-                // 只取最新10条
-                const topItems = Array.from(items).slice(0, 10);
-                let html = '';
-
-                topItems.forEach(function(item) {
-                    const title = item.querySelector('title').textContent;
-                    const link = item.querySelector('link').textContent;
-                    const pubDate = item.querySelector('pubDate').textContent;
-                    const date = new Date(pubDate).toLocaleString('zh-CN');
-                    
-                    html += '<div class="news-item">' +
-                        '<a href="' + link + '" target="_blank" class="news-title">' + title + '</a>' +
-                        '<div class="news-date">发布时间：' + date + '</div>' +
-                        '</div>';
-                });
-
-                container.innerHTML = html;
-            } catch (error) {
-                console.error('加载新闻失败', error);
-                container.innerHTML = '<div id="news-error">加载科技新闻失败，请刷新页面重试</div>';
-            }
-        }
-
-        // 页面加载完成后获取新闻
-        window.addEventListener('load', loadTechNews);
-    </script>
 </body>
 </html>
