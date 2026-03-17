@@ -12,19 +12,24 @@
             box-sizing: border-box;
         }
         :root {
-            --primary-color: #2563eb;
-            --text-color: #1f2937;
-            --light-text: #6b7280;
-            --bg-color: #f9fafb;
+            --primary-color: #0f3460;
+            --accent-color: #d4af37;
+            --text-color: #1a1a1a;
+            --light-text: #555555;
+            --bg-color: #f0f2f5;
             --card-bg: #ffffff;
-            --border-color: #e5e7eb;
-            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --border-color: #0f3460;
+            --shadow: 0 4px 12px rgba(15, 52, 96, 0.15);
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             line-height: 1.7;
             color: var(--text-color);
             background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(15, 52, 96, 0.05) 0%, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
+            background-attachment: fixed;
         }
         .container {
             max-width: 900px;
@@ -35,39 +40,43 @@
             text-align: center;
             margin-bottom: 50px;
             padding-bottom: 30px;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 2px solid var(--border-color);
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1a4a8a 100%);
+            color: white;
+            padding: 40px 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
         }
         h1 {
             font-size: 2.5em;
             font-weight: 700;
-            color: var(--text-color);
             margin-bottom: 10px;
         }
         .subtitle {
             font-size: 1.2em;
-            color: var(--light-text);
-            font-weight: 400;
+            opacity: 0.9;
+            font-weight: 300;
         }
         section {
             background: var(--card-bg);
             padding: 30px;
             margin-bottom: 30px;
-            border-radius: 10px;
+            border-radius: 12px;
             box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary-color);
         }
         h2 {
             font-size: 1.5em;
             font-weight: 600;
-            color: var(--text-color);
+            color: var(--primary-color);
             margin-bottom: 20px;
             padding-left: 15px;
-            border-left: 4px solid var(--primary-color);
         }
         h3 {
             font-size: 1.2em;
             font-weight: 600;
             margin: 15px 0 10px;
-            color: var(--text-color);
+            color: var(--primary-color);
         }
         p {
             margin-bottom: 15px;
@@ -82,14 +91,16 @@
             color: var(--light-text);
         }
         li strong {
-            color: var(--text-color);
+            color: var(--primary-color);
         }
         a {
             color: var(--primary-color);
             text-decoration: none;
+            border-bottom: 1px solid transparent;
         }
         a:hover {
             text-decoration: underline;
+            border-bottom-color: var(--primary-color);
         }
         .contact-list {
             list-style: none;
@@ -102,7 +113,7 @@
         }
         .news-item {
             padding: 12px 0;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid #e8e8e8;
         }
         .news-item:last-child {
             border-bottom: none;
@@ -120,14 +131,23 @@
             font-style: italic;
         }
         #news-error {
-            color: #ef4444;
+            color: #c0392b;
         }
         footer {
             text-align: center;
             color: var(--light-text);
             margin-top: 50px;
             padding-top: 30px;
-            border-top: 1px solid var(--border-color);
+            border-top: 2px solid var(--border-color);
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding-bottom: 30px;
+        }
+        footer p:last-child {
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-bottom: 0;
         }
         @media (max-width: 600px) {
             h1 {
@@ -138,6 +158,9 @@
             }
             .container {
                 padding: 20px 15px;
+            }
+            header {
+                padding: 30px 15px;
             }
         }
     </style>
