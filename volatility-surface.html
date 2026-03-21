@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>波动率曲面 3D 可视化 - 期权世界</title>
+    <meta name="description" content="期权波动率曲面交互式3D可视化工具，帮助期权卖方分析波动率结构">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary-color: #0f3460;
+            --accent-color: #d4af37;
+            --text-color: #1a1a1a;
+            --light-text: #555555;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --border-color: #0f3460;
+            --shadow: 0 4px 12px rgba(15, 52, 96, 0.15);
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(15, 52, 96, 0.05) 0%, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 20px 40px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1a4a8a 100%);
+            color: white;
+            padding: 30px 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+        h1 {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: white;
+            text-decoration: underline;
+        }
+        .back-link:hover {
+            color: var(--accent-color);
+        }
+        .content-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .info-card {
+            flex: 1;
+            min-width: 300px;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary-color);
+        }
+        .canvas-card {
+            flex: 2;
+            min-width: 600px;
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        h2 {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        h3 {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin: 15px 0 10px;
+            color: var(--primary-color);
+        }
+        p, li {
+            margin-bottom: 10px;
+            color: var(--light-text);
+            line-height: 1.7;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        #volCanvas {
+            width: 100%;
+            height: 550px;
+            display: block;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #1a4a8a;
+        }
+        .legend {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+        .color-box {
+            width: 30px;
+            height: 15px;
+            border-radius: 3px;
+        }
+        .low-vol {
+            background: linear-gradient(to right, #0000ff, #00ffff);
+        }
+        .mid-vol {
+            background: linear-gradient(to right, #00ffff, #ffff00);
+        }
+        .high-vol {
+            background: linear-gradient(to right, #ffff00, #ff0000);
+        }
+        @media (max-width: 900px) {
+            .content-row {
+                flex-direction: column;
+            }
+            .canvas-card {
+                min-width: 100%;
+            }
+            #volCanvas {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>波动率曲面 3D 可视化</h1>
+            <p class="subtitle">交互式隐含波动率曲面分析工具 — 帮助期权卖方发现波动率机会</p>
+            <a href="index.html" class="back-link">← 返回首页</a>
+        </header>
+
+        <div class="content-row">
+            <div class="info-card">
+                <h2>工具说明</h2>
+                <p>这是一个仿 OpenVlab 的波动率曲面可视化工具，通过 3D 图形直观展示：</p>
+                <ul>
+                    <li><strong>X 轴</strong>：行权价（Strike Price）</li>
+                    <li><strong>Y 轴</strong>：剩余到期天数（Days to Expiry）</li>
+                    <li><strong>Z 轴</strong>：隐含波动率（Implied Volatility）</li>
+                </ul>
+                
+                <h3>交互操作</h3>
+                <ul>
+                    <li>🖱️ <strong>鼠标拖动</strong>：旋转曲面</li>
+                    <li>🔍 <strong>滚轮缩放</strong>：放大缩小</li>
+                    <li>👆 <strong>右键拖动</strong>：平移视角</li>
+                </ul>
+
+                <h3>颜色说明</h3>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="color-box low-vol"></div>
+                        <span>低波动率</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="color-box mid-vol"></div>
+                        <span>中等波动率</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="color-box high-vol"></div>
+                        <span>高波动率</span>
+                    </div>
+                </div>
+
+                <h3>对接实时数据</h3>
+                <p>当前展示的是 50ETF 期权样本数据（含波动率微笑效应）。如需对接实时期权行情数据，可在代码中修改数据获取 API 接口。</p>
+
+                <div class="controls">
+                    <button class="btn" onclick="resetCamera()">重置视角</button>
+                    <button class="btn" onclick="toggleRotation()">暂停/继续旋转</button>
+                </div>
+            </div>
+
+            <div class="canvas-card">
+                <canvas id="volCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <script>
+        // 生成模拟的波动率曲面数据（包含波动率微笑效应）
+        function generateVolatilitySurface() {
+            const strikes = [2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8];
+            const daysToExpiry = [7, 14, 30, 60, 90, 120, 180, 270, 365];
+            
+            const data = [];
+            const atmStrike = 2.9; // 当前50ETF大概价格附近
+            
+            for (let y = 0; y < daysToExpiry.length; y++) {
+                for (let x = 0; x < strikes.length; x++) {
+                    const strike = strikes[x];
+                    const days = daysToExpiry[y];
+                    
+                    // 波动率微笑：ATM波动率最低，两端升高
+                    const moneyness = Math.abs(strike - atmStrike) / atmStrike;
+                    let vol = 0.16 + 0.12 * moneyness * moneyness;
+                    
+                    // 波动率期限结构：短日期波动率更高
+                    vol *= (1 + 0.3 * Math.exp(-days / 30));
+                    
+                    // 添加一些随机性让曲面更自然
+                    vol += (Math.random() - 0.5) * 0.01;
+                    
+                    data.push({
+                        x: strike,
+                        y: days,
+                        z: vol * 10 // 缩放Z轴让图形更明显
+                    });
+                }
+            }
+            
+            return {
+                strikes: strikes,
+                expirations: daysToExpiry,
+                data: data,
+                width: strikes.length,
+                height: daysToExpiry.length
+            };
+        }
+
+        let scene, camera, renderer, controls, surface;
+        let autoRotate = true;
+
+        function init() {
+            const canvas = document.getElementById('volCanvas');
+            
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf8f9fa);
+
+            // Camera
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            camera.position.set(3, 3, 3);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true});
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 1.0;
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            directionalLight.position.set(5, 10, 7);
+            scene.add(directionalLight);
+
+            // Create volatility surface
+            createVolSurface();
+
+            // Axes helper
+            const axesHelper = new THREE.AxesHelper(5);
+            scene.add(axesHelper);
+
+            // Handle resize
+            window.addEventListener('resize', onWindowResize);
+
+            // Start animation
+            animate();
+        }
+
+        function createVolSurface() {
+            const volData = generateVolatilitySurface();
+            const width = volData.width;
+            const height = volData.height;
+            
+            // Normalize coordinates
+            const xMin = Math.min(...volData.data.map(d => d.x));
+            const xMax = Math.max(...volData.data.map(d => d.x));
+            const yMin = Math.min(...volData.data.map(d => d.y));
+            const yMax = Math.max(...volData.data.map(d => d.y));
+            const zMin = Math.min(...volData.data.map(d => d.z));
+            const zMax = Math.max(...volData.data.map(d => d.z));
+            
+            const geometry = new THREE.PlaneGeometry(
+                (xMax - xMin), 
+                (yMax - yMin), 
+                width - 1, 
+                height - 1
+            );
+            
+            // Set z positions
+            const positions = geometry.attributes.position;
+            for (let i = 0; i < positions.count; i++) {
+                const xIdx = i % width;
+                const yIdx = Math.floor(i / width);
+                const dataIndex = yIdx * width + xIdx;
+                positions.setZ(i, volData.data[dataIndex].z / 10 - 0.15);
+            }
+            positions.needsUpdate = true;
+            geometry.computeVertexNormals();
+            
+            // Create color gradient based on z value
+            const colors = [];
+            for (let i = 0; i < positions.count; i++) {
+                const z = positions.getZ(i);
+                const normalizedZ = (z + 0.15) / ( (zMax / 10 - 0.15) - (-0.15) );
+                
+                // Blue (low) -> Cyan -> Yellow -> Red (high)
+                let r, g, b;
+                if (normalizedZ < 0.33) {
+                    // Blue to Cyan
+                    const t = normalizedZ / 0.33;
+                    r = 0;
+                    g = 0 + t * 255;
+                    b = 255;
+                } else if (normalizedZ < 0.66) {
+                    // Cyan to Yellow
+                    const t = (normalizedZ - 0.33) / 0.33;
+                    r = 0 + t * 255;
+                    g = 255;
+                    b = 255 - t * 255;
+                } else {
+                    // Yellow to Red
+                    const t = (normalizedZ - 0.66) / 0.34;
+                    r = 255;
+                    g = 255 - t * 255;
+                    b = 0;
+                }
+                colors.push(new THREE.Color(r / 255, g / 255, b / 255));
+            }
+            geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors.flatMap(c => [c.r, c.g, c.b])), 3));
+            
+            const material = new THREE.MeshPhongMaterial({
+                vertexColors: true,
+                side: THREE.DoubleSide,
+                flatShading: false,
+                shininess: 100
+            });
+            
+            surface = new THREE.Mesh(geometry, material);
+            surface.rotation.x = -Math.PI / 2;
+            surface.position.set(
+                (xMax + xMin) / 2 - 2.9, 
+                (yMax + yMin) / 2 / 365 * 180 - 90, 
+                0
+            );
+            scene.add(surface);
+        }
+
+        function onWindowResize() {
+            const canvas = document.getElementById('volCanvas');
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (controls) {
+                controls.update();
+            }
+            renderer.render(scene, camera);
+        }
+
+        function resetCamera() {
+            controls.reset();
+            camera.position.set(3, 3, 3);
+            controls.update();
+        }
+
+        function toggleRotation() {
+            autoRotate = !autoRotate;
+            controls.autoRotate = autoRotate;
+        }
+
+        // Initialize when page loads
+        window.onload = init;
+    </script>
+</body>
+</html>
