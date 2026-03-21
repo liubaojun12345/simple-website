@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科创50ETF期权实时行情 - 期权世界</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary-color: #0f3460;
+            --accent-color: #d4af37;
+            --text-color: #1a1a1a;
+            --light-text: #555555;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --border-color: #0f3460;
+            --shadow: 0 4px 12px rgba(15, 52, 96, 0.15);
+            --call-color: #e6f7ff;
+            --put-color: #fff1f0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(15, 52, 96, 0.05) 0%, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 20px 40px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1a4a8a 100%);
+            color: white;
+            padding: 25px 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+        h1 {
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            font-size: 1em;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 8px;
+            color: white;
+            text-decoration: underline;
+        }
+        .back-link:hover {
+            color: var(--accent-color);
+        }
+        .info-bar {
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .info-item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .label {
+            color: var(--light-text);
+        }
+        .value {
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 1.1em;
+        }
+        .refresh-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .refresh-btn:hover {
+            background: #1a4a8a;
+        }
+        .filter-bar {
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 15px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-item label {
+            color: var(--light-text);
+        }
+        select {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        thead {
+            background: var(--primary-color);
+            color: white;
+        }
+        th {
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 13px;
+            border: none;
+        }
+        td {
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+        tr.call-row {
+            background: var(--call-color);
+        }
+        tr.put-row {
+            background: var(--put-color);
+        }
+        tr:hover {
+            opacity: 0.85;
+        }
+        .high-iv {
+            background-color: #ffccc7;
+            font-weight: 600;
+        }
+        .low-iv {
+            background-color: #d9f7be;
+            font-weight: 600;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: var(--light-text);
+        }
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            table {
+                font-size: 11px;
+            }
+            th, td {
+                padding: 6px 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>科创50ETF(588000) 期权实时行情</h1>
+            <p class="subtitle">免费akshare接口获取，自动刷新 — 期权卖方交易辅助工具</p>
+            <a href="index.html" class="back-link">← 返回首页</a>
+        </header>
+
+        <div class="info-bar">
+            <div class="info-item">
+                <span class="label">ETF当前价格：</span>
+                <span class="value" id="currentEtfPrice">-</span>
+            </div>
+            <div class="info-item">
+                <span class="label">最后更新：</span>
+                <span class="value" id="updateTime">-</span>
+            </div>
+            <div class="info-item">
+                <span class="label">合约数量：</span>
+                <span class="value" id="contractCount">-</span>
+            </div>
+            <button class="refresh-btn" onclick="loadData()">手动刷新</button>
+            <div class="auto-refresh">
+                <input type="checkbox" id="autoRefresh" checked>
+                <label for="autoRefresh">自动刷新（3分钟）</label>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter-item">
+                <label>到期日：</label>
+                <select id="expiryFilter" onchange="renderTable()">
+                    <option value="">全部</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>类型：</label>
+                <select id="cpFilter" onchange="renderTable()">
+                    <option value="">全部</option>
+                    <option value="认购">认购</option>
+                    <option value="认沽">认沽</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>只显示高波动：</label>
+                <select id="ivFilter" onchange="renderTable()">
+                    <option value="">全部</option>
+                    <option value="high">IV > 0.25 (25%)</option>
+                    <option value="low">IV < 0.15 (15%)</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">正在加载数据...</div>
+
+        <table id="optionTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>类型</th>
+                    <th>行权价</th>
+                    <th>最新价</th>
+                    <th>买一价</th>
+                    <th>卖一价</th>
+                    <th>持仓量</th>
+                    <th>成交量</th>
+                    <th>隐含波动率%</th>
+                    <th>内在价值</th>
+                    <th>时间价值</th>
+                    <th>Delta</th>
+                    <th>到期日</th>
+                </tr>
+            </thead>
+            <tbody id="optionBody">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let allData = null;
+        let refreshTimer = null;
+
+        function loadData() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('optionTable').style.display = 'none';
+
+            fetch('/api/latest-data')
+                .then(response => response.json())
+                .then(result => {
+                    if (result.code === 0 && result.data) {
+                        allData = result.data;
+                        updateInfo();
+                        populateFilters();
+                        renderTable();
+                    } else {
+                        // 尝试获取新数据
+                        fetch('/api/option-chain')
+                            .then(response => response.json())
+                            .then(result => {
+                                if (result.code === 0 && result.data) {
+                                    allData = result.data;
+                                    updateInfo();
+                                    populateFilters();
+                                    renderTable();
+                                } else {
+                                    alert('获取数据失败，请检查后端服务');
+                                }
+                            });
+                    }
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('optionTable').style.display = 'table';
+                })
+                .catch(error => {
+                    console.error('加载数据出错', error);
+                    alert('加载数据出错');
+                    document.getElementById('loading').style.display = 'none';
+                });
+        }
+
+        function updateInfo() {
+            if (!allData) return;
+            document.getElementById('currentEtfPrice').textContent = allData.current_etf_price || '-';
+            document.getElementById('updateTime').textContent = allData.update_time || '-';
+            document.getElementById('contractCount').textContent = (allData.options || []).length;
+        }
+
+        function populateFilters() {
+            if (!allData) return;
+            const selector = document.getElementById('expiryFilter');
+            selector.innerHTML = '<option value="">全部</option>';
+            (allData.expiration_dates || []).forEach(date => {
+                const option = document.createElement('option');
+                option.value = date;
+                option.textContent = date;
+                selector.appendChild(option);
+            });
+        }
+
+        function renderTable() {
+            if (!allData || !allData.options) return;
+
+            const expiryFilter = document.getElementById('expiryFilter').value;
+            const cpFilter = document.getElementById('cpFilter').value;
+            const ivFilter = document.getElementById('ivFilter').value;
+
+            let filtered = allData.options.filter(opt => {
+                if (expiryFilter && opt.expiration_date !== expiryFilter) return false;
+                if (cpFilter && opt.cp !== cpFilter) return false;
+                if (ivFilter === 'high' && (!opt.implied_volatility || opt.implied_volatility <= 25)) return false;
+                if (ivFilter === 'low' && (!opt.implied_volatility || opt.implied_volatility >= 15)) return false;
+                return true;
+            });
+
+            // 按行权价排序
+            filtered.sort((a, b) => a.strike_price - b.strike_price);
+
+            const tbody = document.getElementById('optionBody');
+            tbody.innerHTML = '';
+
+            filtered.forEach(opt => {
+                const tr = document.createElement('tr');
+                tr.className = opt.cp === '认购' ? 'call-row' : 'put-row';
+
+                // IV高亮
+                let ivClass = '';
+                if (opt.implied_volatility > 25) ivClass = 'high-iv';
+                if (opt.implied_volatility < 15) ivClass = 'low-iv';
+
+                tr.innerHTML = `
+                    <td><strong>${opt.cp}</strong></td>
+                    <td><strong>${opt.strike_price}</strong></td>
+                    <td>${opt.last_price || '-'}</td>
+                    <td>${opt.bid_price || '-'}</td>
+                    <td>${opt.ask_price || '-'}</td>
+                    <td>${opt.open_interest || '-'}</td>
+                    <td>${opt.volume || '-'}</td>
+                    <td class="${ivClass}">${opt.implied_volatility || '-'}</td>
+                    <td>${opt.intrinsic_value}</td>
+                    <td>${opt.time_value}</td>
+                    <td>${opt.delta !== null && opt.delta !== undefined ? opt.delta.toFixed(3) : '-'}</td>
+                    <td>${opt.expiration_date}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function setupAutoRefresh() {
+            const checkbox = document.getElementById('autoRefresh');
+            checkbox.addEventListener('change', function() {
+                if (refreshTimer) {
+                    clearInterval(refreshTimer);
+                    refreshTimer = null;
+                }
+                if (this.checked) {
+                    // 每3分钟刷新一次
+                    refreshTimer = setInterval(() => {
+                        console.log('自动刷新数据...');
+                        loadData();
+                    }, 3 * 60 * 1000);
+                }
+            });
+
+            // 初始启动自动刷新
+            if (checkbox.checked) {
+                refreshTimer = setInterval(() => {
+                    console.log('自动刷新数据...');
+                    loadData();
+                }, 3 * 60 * 1000);
+            }
+        }
+
+        // 页面加载完成
+        window.onload = function() {
+            loadData();
+            setupAutoRefresh();
+        };
+    </script>
+</body>
+</html>
