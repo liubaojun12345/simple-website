@@ -217,28 +217,41 @@
                 <p>当前支持两种数据模式：</p>
                 <ul>
                     <li>🧪 <strong>模拟样本数据</strong>：展示典型的波动率微笑效应</li>
-                    <li>📊 <strong>真实波动率数据</strong>：可对接你已有的历史波动率/隐含波动率数据</li>
+                    <li>📊 <strong>真实波动率数据</strong>：通过 akshare 获取 A 股期权实时数据（上证50ETF/沪深300/科创50等）</li>
                 </ul>
                 <div class="controls">
                     <button class="btn" onclick="useSampleData()">加载样本数据</button>
+                    <button class="btn" onclick="loadRealData()">加载真实数据</button>
                     <button class="btn" onclick="resetCamera()">重置视角</button>
                     <button class="btn" onclick="toggleRotation()">暂停/继续旋转</button>
                 </div>
 
-                <h3>对接实时/历史数据</h3>
-                <p>如果你已经有了波动率数据，只需要按照以下格式准备数据，并引入 JS 文件即可：</p>
+                <h3>获取真实期权数据</h3>
+                <p>项目目录下已经提供了 <code>fetch-vol-data.py</code> 脚本，使用 akshare 获取真实 A 股期权数据：</p>
+                <ol>
+                    <li>安装依赖：<code>pip install akshare pandas</code></li>
+                    <li>修改脚本中的 ETF 代码（默认50ETF，可改为科创50/沪深300）</li>
+                    <li>运行：<code>python fetch-vol-data.py</code></li>
+                    <li>自动生成 <code>real-iv-data.js</code>，上传到网站目录</li>
+                    <li>刷新页面就能看到最新的真实波动率曲面了</li>
+                </ol>
+                <p>支持：50ETF(510050)、沪深300ETF(510300)、科创50ETF(588000)、创业板ETF(159915)</p>
+
+                <h3>自定义数据格式</h3>
+                <p>如果你有自己的数据，按此格式准备：</p>
                 <pre style="background: #f0f0f0; padding: 10px; border-radius: 4px; font-size: 12px; overflow-x: auto;">
-// 数据格式示例
 const volSurfaceData = {
   strikes: [2.4, 2.5, 2.6, ...], // 行权价数组
   expirations: [7, 14, 30, ...], // 剩余到期天数数组
   data: [
     {x: strike, y: days, z: iv}, // 每个点的隐含波动率
     ...
-  ]
+  ],
+  width: 行权价数量,
+  height: 到期日数量
 };
                 </pre>
-                <p>对接后就能看到你自己的波动率曲面了。</p>
+                <p>保存为 <code>real-iv-data.js</code> 放到网站目录即可。</p>
             </div>
 
             <div class="canvas-card">
@@ -249,6 +262,7 @@ const volSurfaceData = {
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <script src="real-iv-data.js"></script>
     <script>
         // 生成模拟的波动率曲面数据（包含波动率微笑效应）
         function generateSampleData() {
@@ -330,8 +344,14 @@ const volSurfaceData = {
             const axesHelper = new THREE.AxesHelper(5);
             scene.add(axesHelper);
 
-            // Create volatility surface with sample data
-            useSampleData();
+            // Use real data if available, otherwise use sample data
+            if (typeof volSurfaceData !== 'undefined') {
+                console.log('加载真实波动率数据');
+                createVolSurface(volSurfaceData);
+            } else {
+                console.log('未找到真实数据，使用样本数据');
+                useSampleData();
+            }
 
             // Handle resize
             window.addEventListener('resize', onWindowResize);
@@ -461,6 +481,15 @@ const volSurfaceData = {
         function useSampleData() {
             if (typeof generateSampleData === 'function') {
                 createVolSurface(generateSampleData());
+            }
+        }
+
+        function loadRealData() {
+            if (typeof volSurfaceData !== 'undefined') {
+                createVolSurface(volSurfaceData);
+                alert('已加载真实波动率数据');
+            } else {
+                alert('未找到真实数据，请先运行 fetch-vol-data.py 生成数据文件');
             }
         }
 
