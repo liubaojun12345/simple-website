@@ -213,13 +213,32 @@
                     </div>
                 </div>
 
-                <h3>对接实时数据</h3>
-                <p>当前展示的是 50ETF 期权样本数据（含波动率微笑效应）。如需对接实时期权行情数据，可在代码中修改数据获取 API 接口。</p>
-
+                <h3>数据选择</h3>
+                <p>当前支持两种数据模式：</p>
+                <ul>
+                    <li>🧪 <strong>模拟样本数据</strong>：展示典型的波动率微笑效应</li>
+                    <li>📊 <strong>真实波动率数据</strong>：可对接你已有的历史波动率/隐含波动率数据</li>
+                </ul>
                 <div class="controls">
+                    <button class="btn" onclick="useSampleData()">加载样本数据</button>
                     <button class="btn" onclick="resetCamera()">重置视角</button>
                     <button class="btn" onclick="toggleRotation()">暂停/继续旋转</button>
                 </div>
+
+                <h3>对接实时/历史数据</h3>
+                <p>如果你已经有了波动率数据，只需要按照以下格式准备数据，并引入 JS 文件即可：</p>
+                <pre style="background: #f0f0f0; padding: 10px; border-radius: 4px; font-size: 12px; overflow-x: auto;">
+// 数据格式示例
+const volSurfaceData = {
+  strikes: [2.4, 2.5, 2.6, ...], // 行权价数组
+  expirations: [7, 14, 30, ...], // 剩余到期天数数组
+  data: [
+    {x: strike, y: days, z: iv}, // 每个点的隐含波动率
+    ...
+  ]
+};
+                </pre>
+                <p>对接后就能看到你自己的波动率曲面了。</p>
             </div>
 
             <div class="canvas-card">
@@ -232,7 +251,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
     <script>
         // 生成模拟的波动率曲面数据（包含波动率微笑效应）
-        function generateVolatilitySurface() {
+        function generateSampleData() {
             const strikes = [2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8];
             const daysToExpiry = [7, 14, 30, 60, 90, 120, 180, 270, 365];
             
@@ -307,12 +326,12 @@
             directionalLight.position.set(5, 10, 7);
             scene.add(directionalLight);
 
-            // Create volatility surface
-            createVolSurface();
-
             // Axes helper
             const axesHelper = new THREE.AxesHelper(5);
             scene.add(axesHelper);
+
+            // Create volatility surface with sample data
+            useSampleData();
 
             // Handle resize
             window.addEventListener('resize', onWindowResize);
@@ -321,8 +340,18 @@
             animate();
         }
 
-        function createVolSurface() {
-            const volData = generateVolatilitySurface();
+        function useSampleData() {
+            createVolSurface(generateSampleData());
+        }
+
+        function createVolSurface(volData) {
+            // Remove existing surface if any
+            if (surface) {
+                scene.remove(surface);
+                surface.geometry.dispose();
+                surface.material.dispose();
+            }
+
             const width = volData.width;
             const height = volData.height;
             
@@ -427,6 +456,12 @@
         function toggleRotation() {
             autoRotate = !autoRotate;
             controls.autoRotate = autoRotate;
+        }
+
+        function useSampleData() {
+            if (typeof generateSampleData === 'function') {
+                createVolSurface(generateSampleData());
+            }
         }
 
         // Initialize when page loads
