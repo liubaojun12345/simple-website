@@ -85,7 +85,7 @@ def get_option_chain_realtime():
         cached_data = {
             "etf_name": ETF_NAME,
             "etf_symbol": ETF_SYMBOL,
-            "current_etf_price": round(float(df['underlying_price'].iloc[0], 3) if len(df) > 0 else None,
+            "current_etf_price": round(float(df['underlying_price'].iloc[0]), 3) if len(df) > 0 else None,
             "update_time": last_update_time,
             "expiration_dates": expiration_dates,
             "options": result
